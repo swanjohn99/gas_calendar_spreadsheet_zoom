@@ -7,28 +7,41 @@
  */
 
 var DRIVE_INBOX_ORGANIZER = {
-  inboxFolderId: '', // e.g. from sync folder URL
-  clientMeetingsRootId: '', // Client Meetings folder ID
+  inboxFolderId: '',
+  clientMeetingsRootId: '',
 };
 
 function organizeDriveInbox() {
+  var result = organizeDriveInbox_();
+  if (!result.ok) {
+    notifyUser_(result.message, 'Drive Inbox');
+    return result;
+  }
+
+  notifyUser_(formatDriveInboxSummary_(result), 'Drive Inbox');
+  return result;
+}
+
+function organizeDriveInbox_() {
   var config = getDriveInboxOrganizerConfig_();
   if (!config.inboxFolderId || !config.clientMeetingsRootId) {
-    notifyUser_(
-      'Set DRIVE_INBOX_FOLDER_ID and CLIENT_MEETINGS_ROOT_FOLDER_ID in Script Properties.',
-      'Drive Inbox'
-    );
-    return;
+    return {
+      ok: false,
+      moved: 0,
+      skipped: 0,
+      deduped: 0,
+      message: 'Set DRIVE_INBOX_FOLDER_ID and CLIENT_MEETINGS_ROOT_FOLDER_ID in Script Properties.'
+    };
   }
 
   var sheet = getEventsSheet_();
   var sheetData = getSheetDataObjects_(sheet);
   var timezone = getConfig_().timezone;
-
   var inbox = DriveApp.getFolderById(config.inboxFolderId);
   var files = inbox.getFiles();
   var moved = 0;
   var skipped = 0;
+  var deduped = 0;
 
   while (files.hasNext()) {
     var file = files.next();
@@ -48,18 +61,45 @@ function organizeDriveInbox() {
 
     var row = match.row;
     var artifact = match.artifact;
+    var urlColumn = getArtifactUrlColumn_(artifact);
+    if (urlColumn && String(row.data[urlColumn] || '').trim()) {
+      Logger.log('Deduped ' + fileName + ': sheet URL already set');
+      trashInboxFile_(file);
+      deduped++;
+      continue;
+    }
+
     var targetFolder = ensureMeetingFolderPath_(
       config.clientMeetingsRootId,
       row.data,
       match.meetingDateIso
     );
+    var existingFile = findFileInFolderByName_(targetFolder, fileName);
+    if (existingFile) {
+      Logger.log('Deduped ' + fileName + ': already in destination');
+      writeArtifactUrl_(sheet, sheetData.headerMap, row.sheetRow, artifact, existingFile.getUrl());
+      trashInboxFile_(file);
+      deduped++;
+      continue;
+    }
 
     file.moveTo(targetFolder);
     writeArtifactUrl_(sheet, sheetData.headerMap, row.sheetRow, artifact, file.getUrl());
     moved++;
   }
 
-  notifyUser_('Drive inbox: moved ' + moved + ', skipped ' + skipped + '.', 'Drive Inbox');
+  return {
+    ok: true,
+    moved: moved,
+    skipped: skipped,
+    deduped: deduped,
+    message: formatDriveInboxSummary_({ moved: moved, skipped: skipped, deduped: deduped })
+  };
+}
+
+function formatDriveInboxSummary_(result) {
+  return 'Drive inbox: moved ' + result.moved + ', skipped ' + result.skipped +
+    ', deduped ' + (result.deduped || 0) + '.';
 }
 
 function getDriveInboxOrganizerConfig_() {
@@ -68,6 +108,26 @@ function getDriveInboxOrganizerConfig_() {
     inboxFolderId: base.driveInboxFolderId || DRIVE_INBOX_ORGANIZER.inboxFolderId,
     clientMeetingsRootId: base.clientMeetingsRootFolderId || DRIVE_INBOX_ORGANIZER.clientMeetingsRootId,
   };
+}
+
+function getArtifactUrlColumn_(artifact) {
+  var columnMap = {
+    video: 'video_url',
+    audio: 'audio_url',
+    transcript: 'transcript_url',
+    meeting_summary: 'pdf_url',
+    chat: 'chat_url',
+  };
+  return columnMap[artifact] || '';
+}
+
+function findFileInFolderByName_(folder, fileName) {
+  var it = folder.getFilesByName(fileName);
+  return it.hasNext() ? it.next() : null;
+}
+
+function trashInboxFile_(file) {
+  file.setTrashed(true);
 }
 
 function isSegmentPartFile_(fileName) {
@@ -156,15 +216,8 @@ function getOrCreateChildFolder_(parentId, name) {
 }
 
 function writeArtifactUrl_(sheet, headerMap, sheetRow, artifact, url) {
-  var columnMap = {
-    video: 'video_url',
-    audio: 'audio_url',
-    transcript: 'transcript_url',
-    meeting_summary: 'pdf_url',
-    chat: 'chat_url',
-  };
-  var header = columnMap[artifact];
-  if (header === undefined || headerMap[header] === undefined) {
+  var header = getArtifactUrlColumn_(artifact);
+  if (!header || headerMap[header] === undefined) {
     Logger.log('No sheet column for artifact: ' + artifact);
     return;
   }

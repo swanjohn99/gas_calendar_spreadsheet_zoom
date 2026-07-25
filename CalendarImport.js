@@ -11,6 +11,23 @@ function runCalendarSync() {
   );
 }
 
+function runScheduledSync() {
+  var importCounts = syncCalendarEvents_();
+  var archived = archiveOldEvents_();
+  var drive = organizeDriveInbox_();
+  var summary = 'Scheduled sync: imported ' + importCounts.training + ' coaching, ' +
+    importCounts.nonTraining + ' non-coaching. Archived ' + archived + ' old events.';
+
+  if (drive.ok) {
+    summary += ' ' + drive.message;
+  } else {
+    summary += ' Drive inbox skipped: ' + drive.message;
+  }
+
+  Logger.log(summary);
+  notifyUser_(summary, 'Scheduled Sync');
+}
+
 function syncCalendarEvents_() {
   var config = getConfig_();
   var trainingSheet = getEventsSheet_();

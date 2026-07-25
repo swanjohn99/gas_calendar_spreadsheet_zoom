@@ -36,8 +36,8 @@ clasp push
 ## Menu actions
 
 - **Import Calendar** — sync events to both sheets, then archive old coaching rows
-- **Schedule** — daily trigger at 9:00 AM `America/Chicago`
-- **Organize Drive Inbox** — move inbox files into meeting folders and write artifact URLs (`Coaching events` only)
+- **Schedule** — daily trigger at 9:00 AM `America/Chicago`: import, archive, and **Organize Drive Inbox**
+- **Organize Drive Inbox** — move inbox files into meeting folders and write artifact URLs (`Coaching events` only); skips duplicates if sheet URL or destination file already exists
 - **Create Email Drafts** — builds coaching follow-up drafts for selected `Coaching events` rows; sets `email_draft_saved`
 
 ## Import routing
@@ -59,6 +59,8 @@ Re-run **Import Calendar** after header changes to repopulate columns.
 2. Python uploads files to the Drive **inbox** folder (exact filenames below)
 3. Run **Organize Drive Inbox** — moves files and fills URL columns
 4. Run **Create Email Drafts** when all required URLs are present
+
+Re-run **Calendar Tools → Schedule** after deploy to replace an old `runCalendarSync` trigger with `runScheduledSync`.
 
 ## Title parsing
 
@@ -82,6 +84,8 @@ Date stamp format: `MM.DD.YY` from meeting `start` (e.g. `03.20.26`).
 **Destination folder:** `{CLIENT_MEETINGS_ROOT}/{program}/{First Last}/Coaching Call {MM.DD.YY}/`
 
 Segment part files (e.g. `*_1.mp4`) are skipped.
+
+Re-running **Organize Drive Inbox** is idempotent: if the artifact URL is already on the row or a file with the same name exists in the meeting folder, the inbox copy is trashed instead of moved (no duplicate files).
 
 ## Artifact columns
 
