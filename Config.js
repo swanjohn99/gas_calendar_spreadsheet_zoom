@@ -35,7 +35,7 @@ var CONFIG = {
   HEADERS: [
     'event_id',
     'title',
-    'meeting_type',
+    'program',
     'attendee_first_name',
     'attendee_last_name',
     'description',
@@ -56,7 +56,7 @@ var CONFIG = {
   NON_TRAINING_HEADERS: [
     'event_id',
     'title',
-    'meeting_type',
+    'program',
     'attendee_first_name',
     'attendee_last_name',
     'description',

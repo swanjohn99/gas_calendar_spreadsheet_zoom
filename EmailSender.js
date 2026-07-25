@@ -132,7 +132,7 @@ function logDraftWarn_(row, reason, details) {
 }
 
 function formatDraftLog_(row, reason, details) {
-  var label = row.data.meeting_type || row.data.event_id || 'unknown';
+  var label = row.data.program || row.data.event_id || 'unknown';
   var message = 'Row ' + row.sheetRow + ' | event: ' + label + ' | reason: ' + reason;
   if (details) {
     message += ' | ' + details;
@@ -224,7 +224,7 @@ function getAttendeeFirstName_(rowData) {
 }
 
 function getSessionName_(rowData) {
-  return String(rowData.meeting_type || '').trim() || 'coaching';
+  return String(rowData.program || '').trim() || 'coaching';
 }
 
 function getMeetingDayPhrase_(startDate, timezone) {

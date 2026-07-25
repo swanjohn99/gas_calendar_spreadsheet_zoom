@@ -90,7 +90,7 @@ function findRowAndArtifactForFile_(rows, fileName, timezone) {
 
 function buildExpectedFilenames_(rowData, meetingDateIso) {
   var stamp = formatMmDdYy_(meetingDateIso);
-  var program = sanitizeDriveName_(rowData.meeting_type);
+  var program = sanitizeDriveName_(rowData.program);
   var client = sanitizeDriveName_(
     String(rowData.attendee_first_name || '') + ' ' + String(rowData.attendee_last_name || '')
   );
@@ -132,7 +132,7 @@ function meetingFolderSegment_(meetingDateIso) {
 
 function ensureMeetingFolderPath_(rootId, rowData, meetingDateIso) {
   var segments = [
-    sanitizeDriveName_(rowData.meeting_type),
+    sanitizeDriveName_(rowData.program),
     sanitizeDriveName_(
       String(rowData.attendee_first_name || '') + ' ' + String(rowData.attendee_last_name || '')
     ),

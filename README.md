@@ -65,7 +65,7 @@ Re-run **Import Calendar** after header changes to repopulate columns.
 Calendar event titles are split on the first `-` or `:`:
 
 - `Executive Coaching Call: Gary Tober` → meeting type `Executive Coaching Call`, first `Gary`, last `Tober`
-- Full title stored in `title`; parsed into `meeting_type`, `attendee_first_name`, `attendee_last_name`
+- Full title stored in `title`; parsed into `program`, `attendee_first_name`, `attendee_last_name`
 
 ## Drive inbox filenames
 
@@ -73,13 +73,13 @@ Date stamp format: `MM.DD.YY` from meeting `start` (e.g. `03.20.26`).
 
 | Artifact | Inbox filename pattern |
 |----------|------------------------|
-| video | `{meeting_type} - {First Last} {MM.DD.YY}.mp4` |
-| audio | `{meeting_type} Audio - {First Last} {MM.DD.YY}.m4a` |
-| transcript | `{meeting_type} Transcript - {First Last} {MM.DD.YY}.txt` |
-| chat | `{meeting_type} Chat - {First Last} {MM.DD.YY}.txt` |
-| pdf | `Meeting Summary - {meeting_type} - {First Last} {MM.DD.YY}.pdf` |
+| video | `{program} - {First Last} {MM.DD.YY}.mp4` |
+| audio | `{program} Audio - {First Last} {MM.DD.YY}.m4a` |
+| transcript | `{program} Transcript - {First Last} {MM.DD.YY}.txt` |
+| chat | `{program} Chat - {First Last} {MM.DD.YY}.txt` |
+| pdf | `Meeting Summary - {program} - {First Last} {MM.DD.YY}.pdf` |
 
-**Destination folder:** `{CLIENT_MEETINGS_ROOT}/{meeting_type}/{First Last}/Coaching Call {MM.DD.YY}/`
+**Destination folder:** `{CLIENT_MEETINGS_ROOT}/{program}/{First Last}/Coaching Call {MM.DD.YY}/`
 
 Segment part files (e.g. `*_1.mp4`) are skipped.
 
@@ -118,7 +118,7 @@ Returns `Coaching events` rows where `email_draft_saved` is empty and meeting `s
     {
       "zoom_meeting_id": "87824741880",
       "meeting_start_date": "2026-07-30 14:30:00",
-      "meeting_type": "Executive Coaching Call",
+      "program": "Executive Coaching Call",
       "attendee_first_name": "Gary",
       "attendee_last_name": "Tober"
     }
@@ -136,7 +136,7 @@ Returns `Non-Coaching events` rows where meeting `start` date is today or earlie
 
 ## Sheet columns
 
-**Coaching events:** `event_id`, `title`, `meeting_type`, `attendee_first_name`, `attendee_last_name`, `description`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `html_link`, `updated`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`
+**Coaching events:** `event_id`, `title`, `program`, `attendee_first_name`, `attendee_last_name`, `description`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `html_link`, `updated`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`
 
 **Non-Coaching events:** same as coaching except no `email_draft_saved` column.
 

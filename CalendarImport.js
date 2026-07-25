@@ -147,7 +147,7 @@ function mapCalendarEventToRow_(event) {
   return {
     event_id: event.getId(),
     title: title,
-    meeting_type: parsedTitle.meeting_type,
+    program: parsedTitle.program,
     attendee_first_name: parsedTitle.attendee_first_name,
     attendee_last_name: parsedTitle.attendee_last_name,
     description: event.getDescription() || '',
@@ -171,7 +171,7 @@ function parseEventTitle_(rawTitle) {
   var title = String(rawTitle || '').trim();
   if (!title) {
     return {
-      meeting_type: '',
+      program: '',
       attendee_first_name: '',
       attendee_last_name: ''
     };
@@ -187,18 +187,18 @@ function parseEventTitle_(rawTitle) {
 
   if (separatorIndex === -1) {
     return {
-      meeting_type: title,
+      program: title,
       attendee_first_name: '',
       attendee_last_name: ''
     };
   }
 
-  var meetingType = title.substring(0, separatorIndex).trim();
+  var program = title.substring(0, separatorIndex).trim();
   var namePart = title.substring(separatorIndex + 1).trim();
   var nameTokens = namePart.split(/\s+/).filter(Boolean);
 
   return {
-    meeting_type: meetingType,
+    program: program,
     attendee_first_name: nameTokens[0] || '',
     attendee_last_name: nameTokens.slice(1).join(' ')
   };
