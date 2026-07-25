@@ -176,7 +176,20 @@ function parseSheetDate_(value) {
 }
 
 function showToast_(message) {
-  SpreadsheetApp.getActiveSpreadsheet().toast(message, 'Calendar Sync', 5);
+  notifyUser_(message, 'Calendar Sync');
+}
+
+function notifyUser_(message, title) {
+  title = title || 'Calendar Tools';
+  try {
+    SpreadsheetApp.getActiveSpreadsheet().toast(message, title, 5);
+    return;
+  } catch (e1) {}
+  try {
+    SpreadsheetApp.getUi().alert(message);
+    return;
+  } catch (e2) {}
+  Logger.log(title + ': ' + message);
 }
 
 function extractDriveFileIdFromUrl_(url) {

@@ -14,8 +14,9 @@ var DRIVE_INBOX_ORGANIZER = {
 function organizeDriveInbox() {
   var config = getDriveInboxOrganizerConfig_();
   if (!config.inboxFolderId || !config.clientMeetingsRootId) {
-    SpreadsheetApp.getUi().alert(
-      'Set DRIVE_INBOX_FOLDER_ID and CLIENT_MEETINGS_ROOT_FOLDER_ID in Script Properties.'
+    notifyUser_(
+      'Set DRIVE_INBOX_FOLDER_ID and CLIENT_MEETINGS_ROOT_FOLDER_ID in Script Properties.',
+      'Drive Inbox'
     );
     return;
   }
@@ -58,7 +59,7 @@ function organizeDriveInbox() {
     moved++;
   }
 
-  SpreadsheetApp.getUi().alert('Drive inbox: moved ' + moved + ', skipped ' + skipped + '.');
+  notifyUser_('Drive inbox: moved ' + moved + ', skipped ' + skipped + '.', 'Drive Inbox');
 }
 
 function getDriveInboxOrganizerConfig_() {
