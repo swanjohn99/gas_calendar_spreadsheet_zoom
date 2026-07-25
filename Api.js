@@ -16,6 +16,9 @@ function doGet(e) {
     })
     .map(function (row) {
       return mapPendingMeetingRow_(row.data);
+    })
+    .filter(function (row) {
+      return row.zoom_meeting_id && row.meeting_start_date;
     });
 
   if (!isNaN(limit) && limit > 0) {
@@ -34,12 +37,15 @@ function isEmailDraftSavedEmpty_(value) {
 }
 
 function mapPendingMeetingRow_(rowData) {
+  var zoomMeetingId = String(rowData.zoom_meeting_id || extractZoomMeetingId_(rowData.location) || '').trim();
+  var startDate = parseSheetDate_(rowData.start);
+
   return {
-    zoom_meeting_id: rowData.zoom_meeting_id || extractZoomMeetingId_(rowData.location),
-    meeting_start_date: rowData.start || '',
-    meeting_type: rowData.meeting_type || '',
-    attendee_first_name: rowData.attendee_first_name || '',
-    attendee_last_name: rowData.attendee_last_name || ''
+    zoom_meeting_id: zoomMeetingId,
+    meeting_start_date: startDate ? formatDateValue_(startDate) : String(rowData.start || '').trim(),
+    meeting_type: String(rowData.meeting_type || '').trim(),
+    attendee_first_name: String(rowData.attendee_first_name || '').trim(),
+    attendee_last_name: String(rowData.attendee_last_name || '').trim()
   };
 }
 

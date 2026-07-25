@@ -106,7 +106,7 @@ Returns rows where `email_draft_saved` is empty:
   "data": [
     {
       "zoom_meeting_id": "87824741880",
-      "meeting_start_date": "2026-07-20 14:00:00",
+      "meeting_start_date": "2026-07-30 14:30:00",
       "meeting_type": "Executive Coaching Call",
       "attendee_first_name": "Gary",
       "attendee_last_name": "Tober"
