@@ -53,12 +53,10 @@ function createEmailDraftsForSelection() {
       var subject = buildCoachingEmailSubject_(row.data, config);
       var plainBody = buildCoachingEmailPlainBody_(row.data, config);
       var htmlBody = buildCoachingEmailHtmlBody_(row.data, config);
-      var options = { htmlBody: htmlBody };
-      var pdfFileId = extractDriveFileIdFromUrl_(row.data.pdf_url);
-
-      if (pdfFileId) {
-        options.attachments = [DriveApp.getFileById(pdfFileId).getBlob()];
-      }
+      var options = {
+        htmlBody: htmlBody,
+        attachments: buildCoachingEmailAttachments_(row.data)
+      };
 
       GmailApp.createDraft(recipientEmail, subject, plainBody, options);
       sheet.getRange(row.sheetRow, emailDraftSavedIndex + 1).setValue(formatDateValue_(new Date()));
@@ -212,6 +210,38 @@ function getMissingArtifactUrls_(rowData) {
   return fields.filter(function (field) {
     return !String(rowData[field] || '').trim();
   });
+}
+
+function buildCoachingEmailAttachments_(rowData) {
+  var requiredFields = [
+    { column: 'pdf_url' },
+    { column: 'audio_url' },
+    { column: 'transcript_url' }
+  ];
+  var attachments = [];
+
+  requiredFields.forEach(function (field) {
+    var blob = getDriveBlobFromUrl_(rowData[field.column]);
+    if (!blob) {
+      throw new Error('Could not load Drive attachment for ' + field.column);
+    }
+    attachments.push(blob);
+  });
+
+  var chatBlob = getDriveBlobFromUrl_(rowData.chat_url);
+  if (chatBlob) {
+    attachments.push(chatBlob);
+  }
+
+  return attachments;
+}
+
+function getDriveBlobFromUrl_(url) {
+  var fileId = extractDriveFileIdFromUrl_(url);
+  if (!fileId) {
+    return null;
+  }
+  return DriveApp.getFileById(fileId).getBlob();
 }
 
 function getAttendeeFirstName_(rowData) {

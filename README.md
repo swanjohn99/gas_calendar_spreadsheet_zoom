@@ -97,7 +97,7 @@ Re-running **Organize Drive Inbox** is idempotent: if the artifact URL is alread
 | `transcript_url` | transcript |
 | `chat_url` | chat |
 
-**Create Email Drafts** requires `video_url`, `pdf_url`, `audio_url`, and `transcript_url`. Email body links to `video_url` and attaches the PDF from `pdf_url`.
+**Create Email Drafts** requires `video_url`, `pdf_url`, `audio_url`, and `transcript_url` (`chat_url` optional). Email body links to `video_url`; attaches PDF, audio, transcript, and chat (if present).
 
 ## API
 
