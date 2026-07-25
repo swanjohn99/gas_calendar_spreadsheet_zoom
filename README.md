@@ -97,7 +97,7 @@ Deploy as web app: **Deploy > New deployment > Web app**
 GET https://script.google.com/macros/s/DEPLOYMENT_ID/exec?key=YOUR_API_KEY&limit=100
 ```
 
-Returns rows where `email_draft_saved` is empty:
+Returns rows where `email_draft_saved` is empty and meeting `start` date is today or earlier (`America/Chicago`):
 
 ```json
 {

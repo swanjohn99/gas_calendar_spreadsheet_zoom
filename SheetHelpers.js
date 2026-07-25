@@ -147,3 +147,20 @@ function formatSheetDateOnly_(value, timezone) {
   }
   return Utilities.formatDate(parsed, timezone, 'yyyy-MM-dd');
 }
+
+function stripToLocalMidnight_(date, timezone) {
+  var year = parseInt(Utilities.formatDate(date, timezone, 'yyyy'), 10);
+  var month = parseInt(Utilities.formatDate(date, timezone, 'MM'), 10) - 1;
+  var day = parseInt(Utilities.formatDate(date, timezone, 'dd'), 10);
+  return new Date(year, month, day);
+}
+
+function isMeetingStartOnOrBeforeToday_(startValue, timezone) {
+  var startDate = parseSheetDate_(startValue);
+  if (!startDate) {
+    return false;
+  }
+  var today = stripToLocalMidnight_(new Date(), timezone);
+  var meetingDay = stripToLocalMidnight_(startDate, timezone);
+  return meetingDay.getTime() <= today.getTime();
+}

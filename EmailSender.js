@@ -259,13 +259,6 @@ function getMeetingDayPhrase_(startDate, timezone) {
   return 'earlier';
 }
 
-function stripToLocalMidnight_(date, timezone) {
-  var year = parseInt(Utilities.formatDate(date, timezone, 'yyyy'), 10);
-  var month = parseInt(Utilities.formatDate(date, timezone, 'MM'), 10) - 1;
-  var day = parseInt(Utilities.formatDate(date, timezone, 'dd'), 10);
-  return new Date(year, month, day);
-}
-
 function getWeekStartSunday_(date) {
   var weekStart = new Date(date);
   weekStart.setDate(weekStart.getDate() - weekStart.getDay());

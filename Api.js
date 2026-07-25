@@ -12,7 +12,8 @@ function doGet(e) {
   var limit = parseInt(params.limit, 10);
   var rows = data.rows
     .filter(function (row) {
-      return isEmailDraftSavedEmpty_(row.data.email_draft_saved);
+      return isEmailDraftSavedEmpty_(row.data.email_draft_saved) &&
+        isMeetingStartOnOrBeforeToday_(row.data.start, config.timezone);
     })
     .map(function (row) {
       return mapPendingMeetingRow_(row.data);
