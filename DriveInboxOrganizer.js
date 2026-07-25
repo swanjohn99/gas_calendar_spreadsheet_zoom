@@ -1,5 +1,5 @@
 /**
- * Drive inbox organizer — move synced files into Client Meetings tree and write URLs.
+ * Drive inbox organizer — copy synced files into Client Meetings tree and write URLs.
  *
  * Setup:
  * 1. Set DRIVE_INBOX_FOLDER_ID and CLIENT_MEETINGS_ROOT_FOLDER_ID in Script Properties (see Config.js).
@@ -27,7 +27,7 @@ function organizeDriveInbox_() {
   if (!config.inboxFolderId || !config.clientMeetingsRootId) {
     return {
       ok: false,
-      moved: 0,
+      copied: 0,
       skipped: 0,
       deduped: 0,
       message: 'Set DRIVE_INBOX_FOLDER_ID and CLIENT_MEETINGS_ROOT_FOLDER_ID in Script Properties.'
@@ -39,7 +39,7 @@ function organizeDriveInbox_() {
   var timezone = getConfig_().timezone;
   var inbox = DriveApp.getFolderById(config.inboxFolderId);
   var files = inbox.getFiles();
-  var moved = 0;
+  var copied = 0;
   var skipped = 0;
   var deduped = 0;
 
@@ -64,7 +64,6 @@ function organizeDriveInbox_() {
     var urlColumn = getArtifactUrlColumn_(artifact);
     if (urlColumn && String(row.data[urlColumn] || '').trim()) {
       Logger.log('Deduped ' + fileName + ': sheet URL already set');
-      trashInboxFile_(file);
       deduped++;
       continue;
     }
@@ -78,27 +77,26 @@ function organizeDriveInbox_() {
     if (existingFile) {
       Logger.log('Deduped ' + fileName + ': already in destination');
       writeArtifactUrl_(sheet, sheetData.headerMap, row.sheetRow, artifact, existingFile.getUrl());
-      trashInboxFile_(file);
       deduped++;
       continue;
     }
 
-    file.moveTo(targetFolder);
-    writeArtifactUrl_(sheet, sheetData.headerMap, row.sheetRow, artifact, file.getUrl());
-    moved++;
+    var copiedFile = file.makeCopy(fileName, targetFolder);
+    writeArtifactUrl_(sheet, sheetData.headerMap, row.sheetRow, artifact, copiedFile.getUrl());
+    copied++;
   }
 
   return {
     ok: true,
-    moved: moved,
+    copied: copied,
     skipped: skipped,
     deduped: deduped,
-    message: formatDriveInboxSummary_({ moved: moved, skipped: skipped, deduped: deduped })
+    message: formatDriveInboxSummary_({ copied: copied, skipped: skipped, deduped: deduped })
   };
 }
 
 function formatDriveInboxSummary_(result) {
-  return 'Drive inbox: moved ' + result.moved + ', skipped ' + result.skipped +
+  return 'Drive inbox: copied ' + result.copied + ', skipped ' + result.skipped +
     ', deduped ' + (result.deduped || 0) + '.';
 }
 
@@ -124,10 +122,6 @@ function getArtifactUrlColumn_(artifact) {
 function findFileInFolderByName_(folder, fileName) {
   var it = folder.getFilesByName(fileName);
   return it.hasNext() ? it.next() : null;
-}
-
-function trashInboxFile_(file) {
-  file.setTrashed(true);
 }
 
 function isSegmentPartFile_(fileName) {
