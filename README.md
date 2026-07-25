@@ -36,7 +36,7 @@ clasp push
 ## Menu actions
 
 - **Import Calendar** — sync events to both sheets, then archive old coaching rows
-- **Schedule** — daily trigger at 9:00 AM `America/Chicago`: import, archive, and **Organize Drive Inbox**
+- **Schedule** — daily trigger at 9:00 AM `America/Chicago`: import, archive, **Organize Drive Inbox**, and **create email drafts** for eligible coaching rows
 - **Organize Drive Inbox** — copy inbox files into meeting folders and write artifact URLs immediately (`Coaching events` only); skips duplicates if sheet URL or destination file already exists; inbox originals stay in place
 - **Create Email Drafts** — builds coaching follow-up drafts for selected `Coaching events` rows; sets `email_draft_saved`
 
@@ -58,7 +58,7 @@ Re-run **Import Calendar** after header changes to repopulate columns.
 1. Chrome extension calls **GET** coaching API for pending meetings
 2. Python uploads files to the Drive **inbox** folder (exact filenames below)
 3. Run **Organize Drive Inbox** — copies files to meeting folders and fills URL columns immediately
-4. Run **Create Email Drafts** when all required URLs are present
+4. Email drafts are created automatically on schedule (or run **Create Email Drafts** manually for selected rows) when all required URLs are present
 
 Re-run **Calendar Tools → Schedule** after deploy to replace an old `runCalendarSync` trigger with `runScheduledSync`.
 
@@ -140,7 +140,7 @@ Returns `Non-Coaching events` rows where meeting `start` date is today or earlie
 
 ## Sheet columns
 
-**Coaching events:** `event_id`, `title`, `program`, `attendee_first_name`, `attendee_last_name`, `description`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `html_link`, `updated`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`
+**Coaching events:** `event_id`, `title`, `program`, `attendee_first_name`, `attendee_last_name`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `updated`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`
 
 **Non-Coaching events:** same as coaching except no `email_draft_saved` column.
 

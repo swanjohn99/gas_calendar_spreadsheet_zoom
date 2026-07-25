@@ -1,5 +1,4 @@
 function createEmailDraftsForSelection() {
-  var config = getConfig_();
   var sheet = getEventsSheet_();
   var selectedRows = getSelectedDataRows_(sheet);
 
@@ -8,30 +7,58 @@ function createEmailDraftsForSelection() {
     return;
   }
 
+  var result = createEmailDraftsForRows_(sheet, selectedRows);
+  var summary = 'Drafts created: ' + result.created + ', skipped: ' + result.skipped + ', errors: ' + result.errors + '.';
+  if (result.messages.length) {
+    summary += ' ' + result.messages.slice(0, 3).join(' | ');
+  }
+  showToast_(summary);
+}
+
+function createEmailDraftsForPending_() {
+  var config = getConfig_();
+  var sheet = getEventsSheet_();
+  var data = getSheetDataObjects_(sheet, config.headers);
+  var eligibleRows = data.rows.filter(function (row) {
+    if (row.data.email_draft_saved) {
+      return false;
+    }
+    if (!isMeetingStartOnOrBeforeToday_(row.data.start, config.timezone)) {
+      return false;
+    }
+    if (!resolveRecipientEmail_(row.data)) {
+      return false;
+    }
+    return getMissingArtifactUrls_(row.data).length === 0;
+  });
+
+  return createEmailDraftsForRows_(sheet, eligibleRows);
+}
+
+function createEmailDraftsForRows_(sheet, rows) {
+  var config = getConfig_();
   var headerMap = getHeaderIndexMap_(sheet);
   var emailDraftSavedIndex = headerMap.email_draft_saved;
   var created = 0;
   var skipped = 0;
   var errors = 0;
-  var skipMessages = [];
+  var messages = [];
 
-  selectedRows.forEach(function (row) {
+  rows.forEach(function (row) {
     if (row.data.email_draft_saved) {
       skipped++;
-      var skipMsg = logDraftSkip_(row, 'already_drafted', 'email_draft_saved=' + row.data.email_draft_saved);
-      skipMessages.push(skipMsg);
+      messages.push(logDraftSkip_(row, 'already_drafted', 'email_draft_saved=' + row.data.email_draft_saved));
       return;
     }
 
     var recipientEmail = resolveRecipientEmail_(row.data);
     if (!recipientEmail) {
       skipped++;
-      var invalidEmailMsg = logDraftSkip_(
+      messages.push(logDraftSkip_(
         row,
         'invalid_attendee_email',
         'attendee_email=' + formatLogValue_(row.data.attendee_email)
-      );
-      skipMessages.push(invalidEmailMsg);
+      ));
       return;
     }
 
@@ -45,7 +72,7 @@ function createEmailDraftsForSelection() {
     if (missingArtifacts.length) {
       skipped++;
       logDraftSkip_(row, 'missing_artifact_urls', 'missing=' + missingArtifacts.join(', '));
-      skipMessages.push('row ' + row.sheetRow + ': missing_artifact_urls');
+      messages.push('row ' + row.sheetRow + ': missing_artifact_urls');
       return;
     }
 
@@ -71,16 +98,12 @@ function createEmailDraftsForSelection() {
           ' | attendee_email=' + formatLogValue_(row.data.attendee_email)
       );
       Logger.log(errorMsg);
-      skipMessages.push('row ' + row.sheetRow + ': draft_failed');
+      messages.push('row ' + row.sheetRow + ': draft_failed');
       errors++;
     }
   });
 
-  var summary = 'Drafts created: ' + created + ', skipped: ' + skipped + ', errors: ' + errors + '.';
-  if (skipMessages.length) {
-    summary += ' ' + skipMessages.slice(0, 3).join(' | ');
-  }
-  showToast_(summary);
+  return { created: created, skipped: skipped, errors: errors, messages: messages };
 }
 
 function resolveRecipientEmail_(rowData) {

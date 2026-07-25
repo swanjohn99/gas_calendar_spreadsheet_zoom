@@ -24,6 +24,9 @@ function runScheduledSync() {
     summary += ' Drive inbox skipped: ' + drive.message;
   }
 
+  var drafts = createEmailDraftsForPending_();
+  summary += ' Drafts: ' + drafts.created + ' created, ' + drafts.skipped + ' skipped, ' + drafts.errors + ' errors.';
+
   Logger.log(summary);
   notifyUser_(summary, 'Scheduled Sync');
 }
@@ -167,13 +170,11 @@ function mapCalendarEventToRow_(event) {
     program: parsedTitle.program,
     attendee_first_name: parsedTitle.attendee_first_name,
     attendee_last_name: parsedTitle.attendee_last_name,
-    description: event.getDescription() || '',
     location: event.getLocation() || '',
     zoom_meeting_id: extractZoomMeetingId_(event.getLocation()),
     start: formatDateValue_(event.getStartTime()),
     end: formatDateValue_(event.getEndTime()),
     attendee_email: getAttendeeEmail_(event),
-    html_link: buildEventHtmlLink_(event),
     updated: formatDateValue_(event.getLastUpdated()),
     email_draft_saved: '',
     video_url: '',
@@ -244,17 +245,6 @@ function getAttendeeEmail_(event) {
   }
 
   return '';
-}
-
-function buildEventHtmlLink_(event) {
-  try {
-    var eventId = event.getId();
-    var calendarId = event.getOriginalCalendarId();
-    var encoded = Utilities.base64EncodeWebSafe(eventId + ' ' + calendarId);
-    return 'https://www.google.com/calendar/event?eid=' + encoded;
-  } catch (error) {
-    return '';
-  }
 }
 
 function writeRowObject_(sheet, sheetRow, obj, headers) {

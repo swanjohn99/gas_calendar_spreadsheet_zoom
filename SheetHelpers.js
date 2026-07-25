@@ -74,6 +74,9 @@ function ensureHeaders_(sheet, headers) {
   if (changed) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     sheet.setFrozenRows(1);
+    if (lastCol > headers.length) {
+      sheet.deleteColumns(headers.length + 1, lastCol - headers.length);
+    }
   }
 }
 
