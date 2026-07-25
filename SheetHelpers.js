@@ -1,12 +1,32 @@
 function getEventsSheet_() {
   var config = getConfig_();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  migrateLegacyEventsSheet_(ss, config);
   var sheet = ss.getSheetByName(config.eventsSheetName);
   if (!sheet) {
     sheet = ss.insertSheet(config.eventsSheetName);
   }
   ensureHeaders_(sheet, config.headers);
   return sheet;
+}
+
+function getNonTrainingEventsSheet_() {
+  var config = getConfig_();
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(config.nonTrainingEventsSheetName);
+  if (!sheet) {
+    sheet = ss.insertSheet(config.nonTrainingEventsSheetName);
+  }
+  ensureHeaders_(sheet, config.nonTrainingHeaders);
+  return sheet;
+}
+
+function migrateLegacyEventsSheet_(ss, config) {
+  var legacySheet = ss.getSheetByName(CONFIG.LEGACY_EVENTS_SHEET_NAME);
+  var trainingSheet = ss.getSheetByName(config.eventsSheetName);
+  if (legacySheet && !trainingSheet) {
+    legacySheet.setName(config.eventsSheetName);
+  }
 }
 
 function ensureHeaders_(sheet, headers) {
@@ -59,9 +79,10 @@ function objectToRow_(obj, headers) {
   });
 }
 
-function getSheetDataObjects_(sheet) {
+function getSheetDataObjects_(sheet, headers) {
   var config = getConfig_();
-  ensureHeaders_(sheet, config.headers);
+  var sheetHeaders = headers || config.headers;
+  ensureHeaders_(sheet, sheetHeaders);
   var headerMap = getHeaderIndexMap_(sheet);
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) {
@@ -69,7 +90,7 @@ function getSheetDataObjects_(sheet) {
   }
 
   var numRows = lastRow - 1;
-  var values = sheet.getRange(2, 1, numRows, config.headers.length).getValues();
+  var values = sheet.getRange(2, 1, numRows, sheetHeaders.length).getValues();
   var rows = values.map(function (row, index) {
     return {
       sheetRow: index + 2,

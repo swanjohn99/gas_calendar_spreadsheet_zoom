@@ -1,5 +1,7 @@
 var CONFIG = {
-  EVENTS_SHEET_NAME: 'Events',
+  EVENTS_SHEET_NAME: 'TrainingEvents',
+  LEGACY_EVENTS_SHEET_NAME: 'Events',
+  NON_TRAINING_EVENTS_SHEET_NAME: 'Non-Training Events',
   CALENDAR_ID: 'primary',
   LOOKBACK_DAYS: 7,
   LOOKAHEAD_DAYS: 30,
@@ -20,6 +22,7 @@ var CONFIG = {
   EMAIL_BODY_PARAGRAPH_QUESTIONS: "If you have any questions or would like to dive deeper into anything that was discussed, please don't hesitate to reach out.",
   EMAIL_BODY_SIGNOFF: 'Warm regards,\nKara',
   PRESERVED_COLUMNS: ['email_draft_saved', 'video_url', 'pdf_url', 'audio_url', 'transcript_url', 'chat_url'],
+  NON_TRAINING_PRESERVED_COLUMNS: ['video_url', 'pdf_url', 'audio_url', 'transcript_url', 'chat_url'],
   ALLOWED_EVENT_COLOR_IDS: ['2', '7', '8', '10'],
   HEADERS: [
     'event_id',
@@ -41,6 +44,26 @@ var CONFIG = {
     'audio_url',
     'transcript_url',
     'chat_url'
+  ],
+  NON_TRAINING_HEADERS: [
+    'event_id',
+    'title',
+    'meeting_type',
+    'attendee_first_name',
+    'attendee_last_name',
+    'description',
+    'location',
+    'zoom_meeting_id',
+    'start',
+    'end',
+    'attendee_email',
+    'html_link',
+    'updated',
+    'video_url',
+    'pdf_url',
+    'audio_url',
+    'transcript_url',
+    'chat_url'
   ]
 };
 
@@ -48,6 +71,7 @@ function getConfig_() {
   var props = PropertiesService.getScriptProperties();
   return {
     eventsSheetName: CONFIG.EVENTS_SHEET_NAME,
+    nonTrainingEventsSheetName: CONFIG.NON_TRAINING_EVENTS_SHEET_NAME,
     calendarId: props.getProperty('CALENDAR_ID') || CONFIG.CALENDAR_ID,
     lookbackDays: CONFIG.LOOKBACK_DAYS,
     lookaheadDays: CONFIG.LOOKAHEAD_DAYS,
@@ -69,8 +93,10 @@ function getConfig_() {
     emailBodyParagraphQuestions: CONFIG.EMAIL_BODY_PARAGRAPH_QUESTIONS,
     emailBodySignoff: CONFIG.EMAIL_BODY_SIGNOFF,
     preservedColumns: CONFIG.PRESERVED_COLUMNS,
+    nonTrainingPreservedColumns: CONFIG.NON_TRAINING_PRESERVED_COLUMNS,
     allowedEventColorIds: CONFIG.ALLOWED_EVENT_COLOR_IDS,
     headers: CONFIG.HEADERS,
+    nonTrainingHeaders: CONFIG.NON_TRAINING_HEADERS,
     apiKey: props.getProperty('API_KEY'),
     driveInboxFolderId: props.getProperty('DRIVE_INBOX_FOLDER_ID'),
     clientMeetingsRootFolderId: props.getProperty('CLIENT_MEETINGS_ROOT_FOLDER_ID')

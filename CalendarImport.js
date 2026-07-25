@@ -3,22 +3,22 @@ function importCalendar() {
 }
 
 function runCalendarSync() {
-  var imported = syncCalendarEvents_();
+  var importCounts = syncCalendarEvents_();
   var archived = archiveOldEvents_();
-  showToast_('Imported ' + imported + ' events. Archived ' + archived + ' old events.');
+  showToast_(
+    'Imported ' + importCounts.training + ' training, ' + importCounts.nonTraining +
+      ' non-training. Archived ' + archived + ' old events.'
+  );
 }
 
 function syncCalendarEvents_() {
   var config = getConfig_();
-  var sheet = getEventsSheet_();
-  var existing = getSheetDataObjects_(sheet);
-  var existingById = {};
-
-  existing.rows.forEach(function (row) {
-    if (row.data.event_id) {
-      existingById[row.data.event_id] = row;
-    }
-  });
+  var trainingSheet = getEventsSheet_();
+  var nonTrainingSheet = getNonTrainingEventsSheet_();
+  var trainingExisting = getSheetDataObjects_(trainingSheet, config.headers);
+  var nonTrainingExisting = getSheetDataObjects_(nonTrainingSheet, config.nonTrainingHeaders);
+  var trainingById = buildExistingById_(trainingExisting.rows);
+  var nonTrainingById = buildExistingById_(nonTrainingExisting.rows);
 
   var calendar = CalendarApp.getCalendarById(config.calendarId);
   if (!calendar) {
@@ -32,42 +32,80 @@ function syncCalendarEvents_() {
   end.setDate(end.getDate() + config.lookaheadDays);
 
   var events = calendar.getEvents(start, end);
-  var upsertCount = 0;
-  var rejectedIds = {};
+  var trainingCount = 0;
+  var nonTrainingCount = 0;
+  var trainingRejected = {};
+  var nonTrainingRejected = {};
 
   events.forEach(function (event) {
     var eventId = event.getId();
+    var hasZoom = hasZoomLinkInLocation_(event.getLocation(), config.zoomLocationPattern);
 
-    if (!isGreenEventColor_(event)) {
-      rejectedIds[eventId] = true;
-      return;
-    }
-
-    if (!hasZoomLinkInLocation_(event.getLocation(), config.zoomLocationPattern)) {
-      rejectedIds[eventId] = true;
+    if (!hasZoom) {
+      trainingRejected[eventId] = true;
+      nonTrainingRejected[eventId] = true;
       return;
     }
 
     var mapped = mapCalendarEventToRow_(event);
-    var current = existingById[mapped.event_id];
 
-    if (current) {
-      config.preservedColumns.forEach(function (column) {
-        if (current.data[column]) {
-          mapped[column] = current.data[column];
-        }
-      });
-      writeRowObject_(sheet, current.sheetRow, mapped, config.headers);
-    } else {
-      appendRowObject_(sheet, mapped, config.headers);
+    if (isGreenEventColor_(event)) {
+      upsertEventRow_(
+        trainingSheet,
+        mapped,
+        trainingById,
+        config.headers,
+        config.preservedColumns
+      );
+      nonTrainingRejected[eventId] = true;
+      trainingCount++;
+      return;
     }
 
-    upsertCount++;
+    upsertEventRow_(
+      nonTrainingSheet,
+      mapped,
+      nonTrainingById,
+      config.nonTrainingHeaders,
+      config.nonTrainingPreservedColumns
+    );
+    trainingRejected[eventId] = true;
+    nonTrainingCount++;
   });
 
-  removeRejectedEventRows_(sheet, existing.rows, rejectedIds);
+  removeRejectedEventRows_(trainingSheet, trainingExisting.rows, trainingRejected);
+  removeRejectedEventRows_(nonTrainingSheet, nonTrainingExisting.rows, nonTrainingRejected);
 
-  return upsertCount;
+  return {
+    training: trainingCount,
+    nonTraining: nonTrainingCount
+  };
+}
+
+function buildExistingById_(rows) {
+  var existingById = {};
+  rows.forEach(function (row) {
+    if (row.data.event_id) {
+      existingById[row.data.event_id] = row;
+    }
+  });
+  return existingById;
+}
+
+function upsertEventRow_(sheet, mapped, existingById, headers, preservedColumns) {
+  var current = existingById[mapped.event_id];
+
+  if (current) {
+    preservedColumns.forEach(function (column) {
+      if (current.data[column]) {
+        mapped[column] = current.data[column];
+      }
+    });
+    writeRowObject_(sheet, current.sheetRow, mapped, headers);
+    return;
+  }
+
+  appendRowObject_(sheet, mapped, headers);
 }
 
 function isGreenEventColor_(event) {
