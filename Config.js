@@ -1,7 +1,15 @@
 var CONFIG = {
-  EVENTS_SHEET_NAME: 'TrainingEvents',
-  LEGACY_EVENTS_SHEET_NAME: 'Events',
-  NON_TRAINING_EVENTS_SHEET_NAME: 'Non-Training Events',
+  EVENTS_SHEET_NAME: 'Coaching events',
+  LEGACY_COACHING_SHEET_NAMES: ['Events', 'TrainingEvents'],
+  NON_TRAINING_EVENTS_SHEET_NAME: 'Non-Coaching events',
+  LEGACY_NON_COACHING_SHEET_NAMES: ['Non-Training Events'],
+  SCRIPT_PROPERTY_KEYS: {
+    API_KEY: 'API_KEY',
+    CALENDAR_ID: 'CALENDAR_ID',
+    ZOOM_ARCHIVE_SPREADSHEET_ID: 'ZOOM_ARCHIVE_SPREADSHEET_ID',
+    DRIVE_INBOX_FOLDER_ID: 'DRIVE_INBOX_FOLDER_ID',
+    CLIENT_MEETINGS_ROOT_FOLDER_ID: 'CLIENT_MEETINGS_ROOT_FOLDER_ID'
+  },
   CALENDAR_ID: 'primary',
   LOOKBACK_DAYS: 7,
   LOOKAHEAD_DAYS: 30,
@@ -69,14 +77,15 @@ var CONFIG = {
 
 function getConfig_() {
   var props = PropertiesService.getScriptProperties();
+  var keys = CONFIG.SCRIPT_PROPERTY_KEYS;
   return {
     eventsSheetName: CONFIG.EVENTS_SHEET_NAME,
     nonTrainingEventsSheetName: CONFIG.NON_TRAINING_EVENTS_SHEET_NAME,
-    calendarId: props.getProperty('CALENDAR_ID') || CONFIG.CALENDAR_ID,
+    calendarId: props.getProperty(keys.CALENDAR_ID) || CONFIG.CALENDAR_ID,
     lookbackDays: CONFIG.LOOKBACK_DAYS,
     lookaheadDays: CONFIG.LOOKAHEAD_DAYS,
     archiveAfterDays: CONFIG.ARCHIVE_AFTER_DAYS,
-    zoomArchiveSpreadsheetId: props.getProperty('ZOOM_ARCHIVE_SPREADSHEET_ID'),
+    zoomArchiveSpreadsheetId: props.getProperty(keys.ZOOM_ARCHIVE_SPREADSHEET_ID),
     zoomArchiveSheetName: CONFIG.ZOOM_ARCHIVE_SHEET_NAME,
     syncHour: CONFIG.SYNC_HOUR,
     timezone: CONFIG.TIMEZONE,
@@ -97,8 +106,8 @@ function getConfig_() {
     allowedEventColorIds: CONFIG.ALLOWED_EVENT_COLOR_IDS,
     headers: CONFIG.HEADERS,
     nonTrainingHeaders: CONFIG.NON_TRAINING_HEADERS,
-    apiKey: props.getProperty('API_KEY'),
-    driveInboxFolderId: props.getProperty('DRIVE_INBOX_FOLDER_ID'),
-    clientMeetingsRootFolderId: props.getProperty('CLIENT_MEETINGS_ROOT_FOLDER_ID')
+    apiKey: props.getProperty(keys.API_KEY),
+    driveInboxFolderId: props.getProperty(keys.DRIVE_INBOX_FOLDER_ID),
+    clientMeetingsRootFolderId: props.getProperty(keys.CLIENT_MEETINGS_ROOT_FOLDER_ID)
   };
 }

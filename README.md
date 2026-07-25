@@ -2,22 +2,24 @@
 
 Bound spreadsheet script that:
 
-- imports Google Calendar events into `TrainingEvents` (green + Zoom) and `Non-Training Events` (non-green + Zoom)
-- archives training events older than 30 days to a `zoom_archive` sheet in another spreadsheet
-- creates Gmail drafts for coaching follow-up emails from selected `TrainingEvents` rows
-- exposes a `doGet` web app API for pending training and non-training meetings (Chrome extension)
+- imports Google Calendar events into `Coaching events` (green + Zoom) and `Non-Coaching events` (non-green + Zoom)
+- archives coaching events older than 30 days to a `zoom_archive` tab in another spreadsheet (see Script Properties)
+- creates Gmail drafts for coaching follow-up emails from selected `Coaching events` rows
+- exposes a `doGet` web app API for pending coaching and non-coaching meetings (Chrome extension)
 - organizes Drive inbox files into meeting folders and writes artifact URLs (`DriveInboxOrganizer.gs`)
 
 ## Setup
 
 1. Create/open the target Google Spreadsheet.
 2. Open **Extensions > Apps Script** and paste or `clasp push` this project.
-3. Set Script Properties (**Project Settings > Script Properties**):
-   - `ZOOM_ARCHIVE_SPREADSHEET_ID` — spreadsheet ID for archive workbook
+3. Set Script Properties (**Project Settings > Script Properties**). Key names are defined in `CONFIG.SCRIPT_PROPERTY_KEYS` in [`Config.js`](Config.js):
+   - `ZOOM_ARCHIVE_SPREADSHEET_ID` — spreadsheet ID for the archive **workbook**
    - `API_KEY` — secret for `doGet`
    - `DRIVE_INBOX_FOLDER_ID` — Drive folder where Python drops synced files
    - `CLIENT_MEETINGS_ROOT_FOLDER_ID` — root `Client Meetings` folder ID
    - optional `CALENDAR_ID` — defaults to `primary`
+
+   Archive uses `ZOOM_ARCHIVE_SPREADSHEET_ID` (which file) plus tab name `zoom_archive` from `Config.js` (which sheet inside that file).
 4. Reload the spreadsheet. Use menu **Calendar Tools**.
 5. Re-authorize the script after `clasp push` if Drive scope changed.
 
@@ -33,27 +35,27 @@ clasp push
 
 ## Menu actions
 
-- **Import Calendar** — sync events to both sheets, then archive old training rows
+- **Import Calendar** — sync events to both sheets, then archive old coaching rows
 - **Schedule** — daily trigger at 9:00 AM `America/Chicago`
-- **Organize Drive Inbox** — move inbox files into meeting folders and write artifact URLs (`TrainingEvents` only)
-- **Create Email Drafts** — builds coaching follow-up drafts for selected `TrainingEvents` rows; sets `email_draft_saved`
+- **Organize Drive Inbox** — move inbox files into meeting folders and write artifact URLs (`Coaching events` only)
+- **Create Email Drafts** — builds coaching follow-up drafts for selected `Coaching events` rows; sets `email_draft_saved`
 
 ## Import routing
 
 | Sheet | Criteria |
 |-------|----------|
-| `TrainingEvents` | Green color IDs `2`, `7`, `8`, `10` + Zoom link in `location` |
-| `Non-Training Events` | Not green + Zoom link in `location` |
+| `Coaching events` | Green color IDs `2`, `7`, `8`, `10` + Zoom link in `location` |
+| `Non-Coaching events` | Not green + Zoom link in `location` |
 
 Events without a Zoom link are removed from both sheets.
 
-On first import after upgrade, the legacy `Events` tab is renamed to `TrainingEvents` if present.
+On first access after upgrade, legacy tab names (`Events`, `TrainingEvents`, `Non-Training Events`) are renamed automatically.
 
 Re-run **Import Calendar** after header changes to repopulate columns.
 
-## Workflow (training)
+## Workflow (coaching)
 
-1. Chrome extension calls **GET** training API for pending meetings
+1. Chrome extension calls **GET** coaching API for pending meetings
 2. Python uploads files to the Drive **inbox** folder (exact filenames below)
 3. Run **Organize Drive Inbox** — moves files and fills URL columns
 4. Run **Create Email Drafts** when all required URLs are present
@@ -100,13 +102,13 @@ Deploy as web app: **Deploy > New deployment > Web app**
 - Execute as: Me
 - Access: your choice (document in deployment)
 
-### GET pending training meetings
+### GET pending coaching meetings
 
 ```text
 GET https://script.google.com/macros/s/DEPLOYMENT_ID/exec?key=YOUR_API_KEY&limit=100
 ```
 
-Returns `TrainingEvents` rows where `email_draft_saved` is empty and meeting `start` date is today or earlier (`America/Chicago`):
+Returns `Coaching events` rows where `email_draft_saved` is empty and meeting `start` date is today or earlier (`America/Chicago`):
 
 ```json
 {
@@ -124,18 +126,18 @@ Returns `TrainingEvents` rows where `email_draft_saved` is empty and meeting `st
 }
 ```
 
-### GET pending non-training meetings
+### GET pending non-coaching meetings
 
 ```text
 GET https://script.google.com/macros/s/DEPLOYMENT_ID/exec?key=YOUR_API_KEY&type=non_training&limit=100
 ```
 
-Returns `Non-Training Events` rows where meeting `start` date is today or earlier (no `email_draft_saved` filter). Response shape is the same as training.
+Returns `Non-Coaching events` rows where meeting `start` date is today or earlier (no `email_draft_saved` filter). Response shape is the same as coaching.
 
 ## Sheet columns
 
-**TrainingEvents:** `event_id`, `title`, `meeting_type`, `attendee_first_name`, `attendee_last_name`, `description`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `html_link`, `updated`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`
+**Coaching events:** `event_id`, `title`, `meeting_type`, `attendee_first_name`, `attendee_last_name`, `description`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `html_link`, `updated`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`
 
-**Non-Training Events:** same as training except no `email_draft_saved` column.
+**Non-Coaching events:** same as coaching except no `email_draft_saved` column.
 
 `zoom_meeting_id` is parsed from the Zoom URL in `location` (e.g. `https://us02web.zoom.us/j/87824741880` → `87824741880`).

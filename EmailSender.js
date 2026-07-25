@@ -4,7 +4,7 @@ function createEmailDraftsForSelection() {
   var selectedRows = getSelectedDataRows_(sheet);
 
   if (!selectedRows.length) {
-    showToast_('Select one or more event rows on the TrainingEvents sheet first.');
+    showToast_('Select one or more event rows on the Coaching events sheet first.');
     return;
   }
 

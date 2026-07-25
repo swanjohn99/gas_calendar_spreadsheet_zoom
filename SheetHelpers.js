@@ -13,6 +13,7 @@ function getEventsSheet_() {
 function getNonTrainingEventsSheet_() {
   var config = getConfig_();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  migrateLegacyNonCoachingSheet_(ss, config);
   var sheet = ss.getSheetByName(config.nonTrainingEventsSheetName);
   if (!sheet) {
     sheet = ss.insertSheet(config.nonTrainingEventsSheetName);
@@ -22,11 +23,33 @@ function getNonTrainingEventsSheet_() {
 }
 
 function migrateLegacyEventsSheet_(ss, config) {
-  var legacySheet = ss.getSheetByName(CONFIG.LEGACY_EVENTS_SHEET_NAME);
-  var trainingSheet = ss.getSheetByName(config.eventsSheetName);
-  if (legacySheet && !trainingSheet) {
-    legacySheet.setName(config.eventsSheetName);
+  if (ss.getSheetByName(config.eventsSheetName)) {
+    return;
   }
+
+  CONFIG.LEGACY_COACHING_SHEET_NAMES.some(function (legacyName) {
+    var legacySheet = ss.getSheetByName(legacyName);
+    if (legacySheet) {
+      legacySheet.setName(config.eventsSheetName);
+      return true;
+    }
+    return false;
+  });
+}
+
+function migrateLegacyNonCoachingSheet_(ss, config) {
+  if (ss.getSheetByName(config.nonTrainingEventsSheetName)) {
+    return;
+  }
+
+  CONFIG.LEGACY_NON_COACHING_SHEET_NAMES.some(function (legacyName) {
+    var legacySheet = ss.getSheetByName(legacyName);
+    if (legacySheet) {
+      legacySheet.setName(config.nonTrainingEventsSheetName);
+      return true;
+    }
+    return false;
+  });
 }
 
 function ensureHeaders_(sheet, headers) {

@@ -6,8 +6,8 @@ function runCalendarSync() {
   var importCounts = syncCalendarEvents_();
   var archived = archiveOldEvents_();
   showToast_(
-    'Imported ' + importCounts.training + ' training, ' + importCounts.nonTraining +
-      ' non-training. Archived ' + archived + ' old events.'
+    'Imported ' + importCounts.training + ' coaching, ' + importCounts.nonTraining +
+      ' non-coaching. Archived ' + archived + ' old events.'
   );
 }
 

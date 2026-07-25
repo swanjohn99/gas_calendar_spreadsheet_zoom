@@ -2,7 +2,7 @@
  * Drive inbox organizer — move synced files into Client Meetings tree and write URLs.
  *
  * Setup:
- * 1. Set DRIVE_INBOX_FOLDER_ID and CLIENT_MEETINGS_ROOT_FOLDER_ID in Config.gs (or below).
+ * 1. Set DRIVE_INBOX_FOLDER_ID and CLIENT_MEETINGS_ROOT_FOLDER_ID in Script Properties (see Config.js).
  * 2. Add organizeDriveInbox to your onOpen menu.
  */
 
