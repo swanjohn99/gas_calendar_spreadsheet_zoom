@@ -31,7 +31,10 @@ var CONFIG = {
   EMAIL_BODY_SIGNOFF: 'Warm regards,\nKara',
   PRESERVED_COLUMNS: ['email_draft_saved', 'video_url', 'pdf_url', 'audio_url', 'transcript_url', 'chat_url'],
   NON_TRAINING_PRESERVED_COLUMNS: ['video_url', 'pdf_url', 'audio_url', 'transcript_url', 'chat_url'],
-  ALLOWED_EVENT_COLOR_IDS: ['2', '7', '8', '10'],
+  // Event color space: Sage (2), Basil (10)
+  COACHING_EVENT_COLOR_IDS: ['2', '10'],
+  // Calendar color space: Eucalyptus (7), Basil (8), Pistachio (9), Avocado (10), Sage (13)
+  COACHING_CALENDAR_COLOR_IDS: ['7', '8', '9', '10', '13'],
   HEADERS: [
     'event_id',
     'title',
@@ -99,7 +102,8 @@ function getConfig_() {
     emailBodySignoff: CONFIG.EMAIL_BODY_SIGNOFF,
     preservedColumns: CONFIG.PRESERVED_COLUMNS,
     nonTrainingPreservedColumns: CONFIG.NON_TRAINING_PRESERVED_COLUMNS,
-    allowedEventColorIds: CONFIG.ALLOWED_EVENT_COLOR_IDS,
+    coachingEventColorIds: CONFIG.COACHING_EVENT_COLOR_IDS,
+    coachingCalendarColorIds: CONFIG.COACHING_CALENDAR_COLOR_IDS,
     headers: CONFIG.HEADERS,
     nonTrainingHeaders: CONFIG.NON_TRAINING_HEADERS,
     apiKey: props.getProperty(keys.API_KEY),

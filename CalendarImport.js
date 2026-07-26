@@ -56,6 +56,7 @@ function syncCalendarEvents_() {
   var nonTrainingCount = 0;
   var trainingRejected = {};
   var nonTrainingRejected = {};
+  var calendarColorCache = {};
 
   events.forEach(function (event) {
     var eventId = event.getId();
@@ -69,7 +70,7 @@ function syncCalendarEvents_() {
 
     var mapped = mapCalendarEventToRow_(event);
 
-    if (isGreenEventColor_(event)) {
+    if (isGreenEventColor_(event, calendarColorCache)) {
       upsertEventRow_(
         trainingSheet,
         mapped,
@@ -128,10 +129,37 @@ function upsertEventRow_(sheet, mapped, existingById, headers, preservedColumns)
   appendRowObject_(sheet, mapped, headers);
 }
 
-function isGreenEventColor_(event) {
-  var allowedIds = getConfig_().allowedEventColorIds;
+function isGreenEventColor_(event, calendarColorCache) {
+  var config = getConfig_();
   var eventColor = String(event.getColor() || '');
-  return allowedIds.indexOf(eventColor) !== -1;
+
+  if (eventColor) {
+    return config.coachingEventColorIds.indexOf(eventColor) !== -1;
+  }
+
+  var calendarId = event.getOriginalCalendarId() || config.calendarId;
+  var calendarColorId = getCalendarColorId_(calendarId, calendarColorCache || {});
+  return config.coachingCalendarColorIds.indexOf(calendarColorId) !== -1;
+}
+
+function getCalendarColorId_(calendarId, cache) {
+  var id = String(calendarId || '');
+  if (!id) {
+    return '';
+  }
+  if (Object.prototype.hasOwnProperty.call(cache, id)) {
+    return cache[id];
+  }
+
+  try {
+    var calendarListEntry = Calendar.CalendarList.get(id);
+    cache[id] = String((calendarListEntry && calendarListEntry.colorId) || '');
+  } catch (error) {
+    Logger.log('Calendar color lookup failed for ' + id + ': ' + error);
+    cache[id] = '';
+  }
+
+  return cache[id];
 }
 
 function hasZoomLinkInLocation_(location, pattern) {
@@ -222,29 +250,46 @@ function parseEventTitle_(rawTitle) {
   };
 }
 
+function toCalendarApiEventId_(eventId) {
+  var id = String(eventId || '');
+  var atIndex = id.indexOf('@');
+  return atIndex === -1 ? id : id.substring(0, atIndex);
+}
+
 function getAttendeeEmail_(event) {
-  try {
-    var apiEvent = Calendar.Events.get(event.getOriginalCalendarId(), event.getId());
-    var guests = (apiEvent.attendees || []).filter(function (guest) {
-      return !guest.organizer && !guest.self;
-    });
+  var apiEventId = toCalendarApiEventId_(event.getId());
+  var calendarIds = [];
+  var originalCalendarId = event.getOriginalCalendarId();
+  var configuredCalendarId = getConfig_().calendarId;
 
-    if (guests.length >= 1) {
-      return guests[0].email || '';
-    }
-  } catch (error) {
-    Logger.log('Calendar API attendee lookup failed: ' + error);
-    var guestList = event.getGuestList();
-    var emails = guestList.map(function (guest) {
-      return guest.getEmail();
-    }).filter(Boolean);
+  if (originalCalendarId) {
+    calendarIds.push(originalCalendarId);
+  }
+  if (configuredCalendarId && calendarIds.indexOf(configuredCalendarId) === -1) {
+    calendarIds.push(configuredCalendarId);
+  }
 
-    if (emails.length >= 1) {
-      return emails[0];
+  for (var i = 0; i < calendarIds.length; i++) {
+    try {
+      var apiEvent = Calendar.Events.get(calendarIds[i], apiEventId);
+      var guests = (apiEvent.attendees || []).filter(function (guest) {
+        return !guest.organizer && !guest.self;
+      });
+
+      if (guests.length >= 1) {
+        return guests[0].email || '';
+      }
+    } catch (error) {
+      // Try next calendar; CalendarApp guest list is the final fallback.
     }
   }
 
-  return '';
+  var guestList = event.getGuestList();
+  var emails = guestList.map(function (guest) {
+    return guest.getEmail();
+  }).filter(Boolean);
+
+  return emails.length >= 1 ? emails[0] : '';
 }
 
 function writeRowObject_(sheet, sheetRow, obj, headers) {

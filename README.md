@@ -44,7 +44,7 @@ clasp push
 
 | Sheet | Criteria |
 |-------|----------|
-| `Coaching events` | Green color IDs `2`, `7`, `8`, `10` + Zoom link in `location` |
+| `Coaching events` | Green + Zoom link in `location`. Event colors: Sage `2`, Basil `10`. If no event color override, calendar colors: Eucalyptus `7`, Basil `8`, Pistachio `9`, Avocado `10`, Sage `13` |
 | `Non-Coaching events` | Not green + Zoom link in `location` |
 
 Events without a Zoom link are removed from both sheets.
