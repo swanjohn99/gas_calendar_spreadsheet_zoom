@@ -33,6 +33,21 @@ clasp push
 
 `.clasp.json` is local-only (gitignored). Copy `scriptId` from the bound Apps Script project.
 
+### GitHub Actions deploy
+
+On every push to `main`, [`.github/workflows/clasp-push.yml`](.github/workflows/clasp-push.yml) runs `clasp push --force`.
+
+Add these repository secrets (**Settings → Secrets and variables → Actions**):
+
+| Secret | Value |
+|--------|--------|
+| `CLASPRC_JSON` | Full contents of `~/.clasprc.json` after `clasp login` |
+| `CLASP_JSON` | Full contents of local `.clasp.json` (includes `scriptId`) |
+
+Enable the Apps Script API for the Google account: [script.google.com/home/usersettings](https://script.google.com/home/usersettings).
+
+If the workflow fails with `401`, re-run `clasp login` locally and update `CLASPRC_JSON`.
+
 ## Menu actions
 
 - **Import Calendar** — sync events to both sheets, then archive old coaching rows

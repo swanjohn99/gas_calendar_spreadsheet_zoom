@@ -1,5 +1,5 @@
 ---
-description: Auto clasp push and git deploy after agent code changes
+description: Auto git deploy after agent code changes
 alwaysApply: true
 ---
 
@@ -7,11 +7,12 @@ alwaysApply: true
 
 After completing code changes in this project:
 
-1. Run `clasp push`
-2. `git add` changed files (never `.clasp.json`, secrets, or credentials)
-3. `git commit` with a short message focused on why
-4. `git push`
+1. `git add` changed files (never `.clasp.json`, secrets, or credentials)
+2. `git commit` with a short message focused on why
+3. `git push`
 
 Do this without being asked, unless the user explicitly says not to commit or push.
 
-If there are no changes to commit, skip git steps but still run `clasp push` if code changed.
+`clasp push` runs automatically in GitHub Actions on push to `main` (see `.github/workflows/clasp-push.yml`); do not run `clasp push` locally.
+
+If there are no changes to commit, skip git steps.
