@@ -3,32 +3,113 @@ function importCalendar() {
 }
 
 function runCalendarSync() {
-  var importCounts = syncCalendarEvents_();
+  var importResult = syncCalendarEvents_();
   var archived = archiveOldEvents_();
   showToast_(
-    'Imported ' + importCounts.training + ' coaching, ' + importCounts.nonTraining +
-      ' non-coaching. Archived ' + archived + ' old events.'
+    'New ' + importResult.newEvents.length +
+      ', updated ' + importResult.updatedCount +
+      ', deleted ' + importResult.deletedEvents.length +
+      '. Archived ' + archived + ' old events.'
   );
 }
 
 function runScheduledSync() {
-  var importCounts = syncCalendarEvents_();
+  var importResult = syncCalendarEvents_();
   var archived = archiveOldEvents_();
-  var drive = organizeDriveInbox_();
-  var summary = 'Scheduled sync: imported ' + importCounts.training + ' coaching, ' +
-    importCounts.nonTraining + ' non-coaching. Archived ' + archived + ' old events.';
-
-  if (drive.ok) {
-    summary += ' ' + drive.message;
-  } else {
-    summary += ' Drive inbox skipped: ' + drive.message;
+  var pipeline;
+  try {
+    pipeline = runOrganizeAndDraftsPipeline_({ source: 'scheduled' });
+  } catch (error) {
+    Logger.log('Organize/drafts pipeline failed: ' + error);
+    pipeline = {
+      ok: false,
+      source: 'scheduled',
+      drive: {
+        ok: false,
+        copied: 0,
+        skipped: 0,
+        deduped: 0,
+        items: [],
+        message: 'Drive/drafts error: ' + error
+      },
+      drafts: { created: 0, skipped: 0, errors: 1, details: [], messages: [] },
+      message: 'Pipeline error: ' + error
+    };
   }
 
-  var drafts = createEmailDraftsForPending_();
-  summary += ' Drafts: ' + drafts.created + ' created, ' + drafts.skipped + ' skipped, ' + drafts.errors + ' errors.';
+  // Always persist this run (including import new/deleted) even if organize/drafts did nothing.
+  var runReport = buildScheduledRunReport_(importResult, pipeline, archived);
+  appendDailyRunReport_(runReport);
+
+  var summary = 'Scheduled sync: new ' + importResult.newEvents.length +
+    ', updated ' + importResult.updatedCount +
+    ', deleted ' + importResult.deletedEvents.length +
+    '. Archived ' + archived + '. ' + pipeline.message;
+
+  if (isLastScheduledRunOfDay_()) {
+    var sent = sendDailySummaryEmailFromRuns_();
+    summary += sent.sent
+      ? ' Day summary emailed.'
+      : ' Day summary not emailed (' + (sent.reason || 'unknown') + ').';
+  } else {
+    summary += ' Report saved; later scheduled runs remain today.';
+  }
 
   Logger.log(summary);
   notifyUser_(summary, 'Scheduled Sync');
+}
+
+/**
+ * Organize inbox then create pending drafts.
+ */
+function runOrganizeAndDraftsPipeline_(options) {
+  options = options || {};
+  var drive = organizeDriveInbox_();
+  var drafts = createEmailDraftsForPending_();
+
+  var message = '';
+  if (drive.ok) {
+    message += drive.message;
+  } else {
+    message += 'Drive inbox skipped: ' + drive.message;
+  }
+  message += ' Drafts: ' + drafts.created + ' created, ' + drafts.skipped +
+    ' skipped, ' + drafts.errors + ' errors.';
+
+  return {
+    ok: !!drive.ok,
+    source: options.source || 'pipeline',
+    drive: drive,
+    drafts: drafts,
+    message: message
+  };
+}
+
+function buildScheduledRunReport_(importResult, pipeline, archived) {
+  var config = getConfig_();
+  var drive = pipeline.drive || {};
+  return {
+    runAt: formatDateValue_(new Date()),
+    hour: parseInt(Utilities.formatDate(new Date(), config.timezone, 'H'), 10),
+    archived: archived || 0,
+    newEvents: importResult.newEvents || [],
+    deletedEvents: importResult.deletedEvents || [],
+    updatedCount: importResult.updatedCount || 0,
+    organizedFiles: drive.items || [],
+    draftDetails: (pipeline.drafts && pipeline.drafts.details) || [],
+    driveMessage: drive.message || '',
+    organizeCounts: {
+      copied: drive.copied || 0,
+      skipped: drive.skipped || 0,
+      deduped: drive.deduped || 0,
+      ok: !!drive.ok
+    },
+    draftCounts: {
+      created: pipeline.drafts ? pipeline.drafts.created : 0,
+      skipped: pipeline.drafts ? pipeline.drafts.skipped : 0,
+      errors: pipeline.drafts ? pipeline.drafts.errors : 0
+    }
+  };
 }
 
 function syncCalendarEvents_() {
@@ -52,11 +133,12 @@ function syncCalendarEvents_() {
   end.setDate(end.getDate() + config.lookaheadDays);
 
   var events = calendar.getEvents(start, end);
-  var trainingCount = 0;
-  var nonTrainingCount = 0;
   var trainingRejected = {};
   var nonTrainingRejected = {};
   var calendarColorCache = {};
+  var rulesMap = buildRulesMap_();
+  var newEvents = [];
+  var updatedCount = 0;
 
   events.forEach(function (event) {
     var eventId = event.getId();
@@ -68,10 +150,12 @@ function syncCalendarEvents_() {
       return;
     }
 
-    var mapped = mapCalendarEventToRow_(event);
+    var mapped = mapCalendarEventToRow_(event, rulesMap);
+    var sheetName;
+    var action;
 
     if (isGreenEventColor_(event, calendarColorCache)) {
-      upsertEventRow_(
+      action = upsertEventRow_(
         trainingSheet,
         mapped,
         trainingById,
@@ -79,27 +163,53 @@ function syncCalendarEvents_() {
         config.preservedColumns
       );
       nonTrainingRejected[eventId] = true;
-      trainingCount++;
-      return;
+      sheetName = config.eventsSheetName;
+    } else {
+      action = upsertEventRow_(
+        nonTrainingSheet,
+        mapped,
+        nonTrainingById,
+        config.nonTrainingHeaders,
+        config.nonTrainingPreservedColumns
+      );
+      trainingRejected[eventId] = true;
+      sheetName = config.nonTrainingEventsSheetName;
     }
 
-    upsertEventRow_(
-      nonTrainingSheet,
-      mapped,
-      nonTrainingById,
-      config.nonTrainingHeaders,
-      config.nonTrainingPreservedColumns
-    );
-    trainingRejected[eventId] = true;
-    nonTrainingCount++;
+    if (action === 'created') {
+      newEvents.push({
+        event_id: mapped.event_id,
+        title: mapped.title,
+        program: mapped.program,
+        zoom_meeting_id: mapped.zoom_meeting_id,
+        start: mapped.start,
+        email: mapped.email,
+        sheet: sheetName
+      });
+    } else {
+      updatedCount++;
+    }
   });
 
-  removeRejectedEventRows_(trainingSheet, trainingExisting.rows, trainingRejected);
-  removeRejectedEventRows_(nonTrainingSheet, nonTrainingExisting.rows, nonTrainingRejected);
+  var deletedTraining = removeRejectedEventRows_(
+    trainingSheet,
+    trainingExisting.rows,
+    trainingRejected,
+    config.eventsSheetName
+  );
+  var deletedNonTraining = removeRejectedEventRows_(
+    nonTrainingSheet,
+    nonTrainingExisting.rows,
+    nonTrainingRejected,
+    config.nonTrainingEventsSheetName
+  );
 
   return {
-    training: trainingCount,
-    nonTraining: nonTrainingCount
+    newEvents: newEvents,
+    deletedEvents: deletedTraining.concat(deletedNonTraining),
+    updatedCount: updatedCount,
+    training: newEvents.filter(function (e) { return e.sheet === config.eventsSheetName; }).length,
+    nonTraining: newEvents.filter(function (e) { return e.sheet === config.nonTrainingEventsSheetName; }).length
   };
 }
 
@@ -123,10 +233,12 @@ function upsertEventRow_(sheet, mapped, existingById, headers, preservedColumns)
       }
     });
     writeRowObject_(sheet, current.sheetRow, mapped, headers);
-    return;
+    return 'updated';
   }
 
   appendRowObject_(sheet, mapped, headers);
+  existingById[mapped.event_id] = { sheetRow: sheet.getLastRow(), data: mapped };
+  return 'created';
 }
 
 function isGreenEventColor_(event, calendarColorCache) {
@@ -171,39 +283,48 @@ function extractZoomMeetingId_(location) {
   return match ? match[1] : '';
 }
 
-function removeRejectedEventRows_(sheet, rows, rejectedIds) {
+function removeRejectedEventRows_(sheet, rows, rejectedIds, sheetName) {
+  var deleted = [];
   var rowsToDelete = rows
     .filter(function (row) {
       return rejectedIds[row.data.event_id];
     })
-    .map(function (row) {
-      return row.sheetRow;
-    })
     .sort(function (a, b) {
-      return b - a;
+      return b.sheetRow - a.sheetRow;
     });
 
-  rowsToDelete.forEach(function (sheetRow) {
-    sheet.deleteRow(sheetRow);
+  rowsToDelete.forEach(function (row) {
+    deleted.push({
+      event_id: String(row.data.event_id || ''),
+      title: String(row.data.title || ''),
+      program: String(row.data.program || ''),
+      zoom_meeting_id: String(row.data.zoom_meeting_id || ''),
+      start: String(row.data.start || ''),
+      email: String(row.data.email || ''),
+      sheet: sheetName || sheet.getName()
+    });
+    sheet.deleteRow(row.sheetRow);
   });
+
+  return deleted;
 }
 
-function mapCalendarEventToRow_(event) {
+function mapCalendarEventToRow_(event, rulesMap) {
   var title = event.getTitle() || '';
-  var parsedTitle = parseEventTitle_(title);
+  var program = parseEventProgram_(title);
+  var rule = lookupRuleByTitle_(rulesMap || {}, title);
 
   return {
     event_id: event.getId(),
     title: title,
-    program: parsedTitle.program,
-    attendee_first_name: parsedTitle.attendee_first_name,
-    attendee_last_name: parsedTitle.attendee_last_name,
+    program: program,
     location: event.getLocation() || '',
     zoom_meeting_id: extractZoomMeetingId_(event.getLocation()),
     start: formatDateValue_(event.getStartTime()),
     end: formatDateValue_(event.getEndTime()),
     attendee_email: getAttendeeEmail_(event),
     updated: formatDateValue_(event.getLastUpdated()),
+    email: rule ? String(rule.email || '').trim() : '',
     email_draft_saved: '',
     video_url: '',
     pdf_url: '',
@@ -213,14 +334,10 @@ function mapCalendarEventToRow_(event) {
   };
 }
 
-function parseEventTitle_(rawTitle) {
+function parseEventProgram_(rawTitle) {
   var title = String(rawTitle || '').trim();
   if (!title) {
-    return {
-      program: '',
-      attendee_first_name: '',
-      attendee_last_name: ''
-    };
+    return '';
   }
 
   var separatorIndex = -1;
@@ -232,22 +349,10 @@ function parseEventTitle_(rawTitle) {
   }
 
   if (separatorIndex === -1) {
-    return {
-      program: title,
-      attendee_first_name: '',
-      attendee_last_name: ''
-    };
+    return title;
   }
 
-  var program = title.substring(0, separatorIndex).trim();
-  var namePart = title.substring(separatorIndex + 1).trim();
-  var nameTokens = namePart.split(/\s+/).filter(Boolean);
-
-  return {
-    program: program,
-    attendee_first_name: nameTokens[0] || '',
-    attendee_last_name: nameTokens.slice(1).join(' ')
-  };
+  return title.substring(0, separatorIndex).trim();
 }
 
 function toCalendarApiEventId_(eventId) {
