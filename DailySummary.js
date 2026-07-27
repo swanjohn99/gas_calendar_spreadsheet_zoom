@@ -103,12 +103,20 @@ function combineDailyRunReports_(store) {
     organizedFiles: [],
     draftDetails: [],
     updatedCount: 0,
-    archived: 0
+    archived: 0,
+    organizeCounts: { copied: 0, skipped: 0, deduped: 0 },
+    draftCounts: { created: 0, skipped: 0, errors: 0 }
   };
 
   (store.runs || []).forEach(function (run) {
     combined.updatedCount += Number(run.updatedCount || 0);
     combined.archived += Number(run.archived || 0);
+    combined.organizeCounts.copied += Number((run.organizeCounts && run.organizeCounts.copied) || 0);
+    combined.organizeCounts.skipped += Number((run.organizeCounts && run.organizeCounts.skipped) || 0);
+    combined.organizeCounts.deduped += Number((run.organizeCounts && run.organizeCounts.deduped) || 0);
+    combined.draftCounts.created += Number((run.draftCounts && run.draftCounts.created) || 0);
+    combined.draftCounts.skipped += Number((run.draftCounts && run.draftCounts.skipped) || 0);
+    combined.draftCounts.errors += Number((run.draftCounts && run.draftCounts.errors) || 0);
     mergeUniqueByEventId_(combined.newEvents, run.newEvents || []);
     mergeUniqueByEventId_(combined.deletedEvents, run.deletedEvents || []);
     mergeOrganizeItems_(combined.organizedFiles, run.organizedFiles || []);
@@ -163,6 +171,16 @@ function upsertDailyDraftDetail_(list, detail) {
 function formatDailySummaryEmailBody_(report, config) {
   var lines = [];
   var hours = getScheduledSyncHours_();
+  var draftedNew = (report.draftDetails || []).filter(function (d) {
+    return d.status === 'drafted';
+  });
+  var alreadyDrafted = (report.draftDetails || []).filter(function (d) {
+    return d.status === 'already_drafted' ||
+      (d.draftSaved && d.status !== 'drafted' && d.status !== 'error');
+  });
+  var notDrafted = (report.draftDetails || []).filter(function (d) {
+    return !(d.draftSaved || d.status === 'drafted' || d.status === 'already_drafted');
+  });
 
   lines.push('Calendar Tools — day summary for ' + report.dateKey);
   lines.push('Timezone: ' + config.timezone);
@@ -170,6 +188,93 @@ function formatDailySummaryEmailBody_(report, config) {
   lines.push('Runs recorded: ' + (report.runs ? report.runs.length : 0));
   lines.push('');
 
+  lines.push('=== Activity summary ===');
+  lines.push(
+    'Files organized: copied ' + (report.organizeCounts.copied || 0) +
+      ', deduped ' + (report.organizeCounts.deduped || 0) +
+      ', skipped ' + (report.organizeCounts.skipped || 0) +
+      ' (items listed: ' + (report.organizedFiles || []).length + ')'
+  );
+  lines.push(
+    'Email drafts: created ' + (report.draftCounts.created || 0) +
+      ', skipped ' + (report.draftCounts.skipped || 0) +
+      ', errors ' + (report.draftCounts.errors || 0)
+  );
+  lines.push(
+    'Calendar rows: new ' + report.newEvents.length +
+      ', deleted ' + report.deletedEvents.length +
+      ', updated existing ' + report.updatedCount +
+      ' (updates omitted from detail lists below)'
+  );
+  lines.push('');
+  lines.push(
+    'Note: file organize + email drafts are always reported, including when they ' +
+      'apply to existing sheet rows with no new/deleted calendar events.'
+  );
+
+  lines.push('');
+  lines.push('=== Organized files ===');
+  if (!(report.organizedFiles || []).length) {
+    lines.push('(none this day)');
+  } else {
+    report.organizedFiles.forEach(function (file, index) {
+      lines.push(
+        (index + 1) + '. ' + (file.title || file.zoom_meeting_id || '(meeting)') +
+          ' | ' + file.artifact +
+          ' | inbox ' + (file.inboxName || '') +
+          ' → ' + file.finalPath +
+          (file.status ? ' (' + file.status + ')' : '')
+      );
+    });
+  }
+
+  lines.push('');
+  lines.push('=== Email drafts created ===');
+  lines.push('Count: ' + draftedNew.length);
+  if (!draftedNew.length) {
+    lines.push('(none created this day)');
+  } else {
+    draftedNew.forEach(function (detail, index) {
+      lines.push(
+        (index + 1) + '. ' + (detail.title || detail.event_id || '(event)') +
+          (detail.recipient ? ' → ' + detail.recipient : '')
+      );
+      var files = (report.organizedFiles || []).filter(function (file) {
+        return String(file.event_id || '') === String(detail.event_id || '') ||
+          (detail.zoom_meeting_id &&
+            String(file.zoom_meeting_id || '') === String(detail.zoom_meeting_id || ''));
+      });
+      if (files.length) {
+        lines.push('   Files organized with this draft:');
+        files.forEach(function (file) {
+          lines.push('   - ' + file.artifact + ': ' + file.finalPath);
+        });
+      }
+    });
+  }
+
+  if (alreadyDrafted.length) {
+    lines.push('');
+    lines.push('=== Already had email draft ===');
+    alreadyDrafted.forEach(function (detail, index) {
+      lines.push((index + 1) + '. ' + (detail.title || detail.event_id || '(event)'));
+    });
+  }
+
+  lines.push('');
+  lines.push('=== No email draft — why ===');
+  if (!notDrafted.length) {
+    lines.push('(none)');
+  } else {
+    notDrafted.forEach(function (detail, index) {
+      lines.push(
+        (index + 1) + '. ' + (detail.title || detail.event_id || '(event)') +
+          ' — ' + (detail.reason || detail.status || 'unknown')
+      );
+    });
+  }
+
+  lines.push('');
   lines.push('=== New events ===');
   lines.push('Count: ' + report.newEvents.length);
   if (!report.newEvents.length) {
@@ -201,75 +306,17 @@ function formatDailySummaryEmailBody_(report, config) {
   }
 
   lines.push('');
-  lines.push('(Row updates for existing event IDs are omitted from this email.)');
-  lines.push('Updated existing rows across runs: ' + report.updatedCount);
-
-  lines.push('');
-  lines.push('=== Email drafts ===');
-  var drafted = (report.draftDetails || []).filter(function (d) {
-    return d.draftSaved || d.status === 'drafted' || d.status === 'already_drafted';
-  });
-  var notDrafted = (report.draftDetails || []).filter(function (d) {
-    return !(d.draftSaved || d.status === 'drafted' || d.status === 'already_drafted');
-  });
-
-  lines.push('Drafts saved: ' + drafted.length);
-  drafted.forEach(function (detail, index) {
-    lines.push((index + 1) + '. ' + (detail.title || detail.event_id || '(event)'));
-    var files = (report.organizedFiles || []).filter(function (file) {
-      return String(file.event_id || '') === String(detail.event_id || '') ||
-        (detail.zoom_meeting_id &&
-          String(file.zoom_meeting_id || '') === String(detail.zoom_meeting_id || ''));
-    });
-    if (files.length) {
-      lines.push('   Organized files:');
-      files.forEach(function (file) {
-        lines.push(
-          '   - ' + file.artifact + ': ' + file.finalPath +
-            (file.status ? ' (' + file.status + ')' : '')
-        );
-      });
-    } else {
-      lines.push('   Organized files: (none in today’s runs; URLs may already have existed)');
-    }
-  });
-
-  lines.push('');
-  lines.push('=== No email draft — why ===');
-  if (!notDrafted.length) {
-    lines.push('(none)');
-  } else {
-    notDrafted.forEach(function (detail, index) {
-      lines.push(
-        (index + 1) + '. ' + (detail.title || detail.event_id || '(event)') +
-          ' — ' + (detail.reason || detail.status || 'unknown')
-      );
-    });
-  }
-
-  lines.push('');
-  lines.push('=== Organized files (all runs) ===');
-  if (!report.organizedFiles.length) {
-    lines.push('(none)');
-  } else {
-    report.organizedFiles.forEach(function (file, index) {
-      lines.push(
-        (index + 1) + '. ' + (file.title || file.zoom_meeting_id) +
-          ' | ' + file.artifact + ' → ' + file.finalPath
-      );
-    });
-  }
-
-  lines.push('');
   lines.push('=== Per-run log ===');
   (report.runs || []).forEach(function (run, index) {
     lines.push(
       (index + 1) + '. ' + (run.runAt || '') +
         ' | hour ' + run.hour +
+        ' | files copied ' + ((run.organizeCounts && run.organizeCounts.copied) || 0) +
+        ' | files deduped ' + ((run.organizeCounts && run.organizeCounts.deduped) || 0) +
+        ' | drafts created ' + ((run.draftCounts && run.draftCounts.created) || 0) +
         ' | new ' + ((run.newEvents || []).length) +
         ' | deleted ' + ((run.deletedEvents || []).length) +
-        ' | updated ' + (run.updatedCount || 0) +
-        ' | drafts created ' + ((run.draftCounts && run.draftCounts.created) || 0)
+        ' | updated ' + (run.updatedCount || 0)
     );
   });
 

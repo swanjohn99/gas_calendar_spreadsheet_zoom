@@ -67,6 +67,7 @@ function runOrganizeAndDraftsPipeline_(options) {
 
 function buildScheduledRunReport_(importResult, pipeline, archived) {
   var config = getConfig_();
+  var drive = pipeline.drive || {};
   return {
     runAt: formatDateValue_(new Date()),
     hour: parseInt(Utilities.formatDate(new Date(), config.timezone, 'H'), 10),
@@ -74,9 +75,15 @@ function buildScheduledRunReport_(importResult, pipeline, archived) {
     newEvents: importResult.newEvents || [],
     deletedEvents: importResult.deletedEvents || [],
     updatedCount: importResult.updatedCount || 0,
-    organizedFiles: (pipeline.drive && pipeline.drive.items) || [],
+    organizedFiles: drive.items || [],
     draftDetails: (pipeline.drafts && pipeline.drafts.details) || [],
-    driveMessage: pipeline.drive ? pipeline.drive.message : '',
+    driveMessage: drive.message || '',
+    organizeCounts: {
+      copied: drive.copied || 0,
+      skipped: drive.skipped || 0,
+      deduped: drive.deduped || 0,
+      ok: !!drive.ok
+    },
     draftCounts: {
       created: pipeline.drafts ? pipeline.drafts.created : 0,
       skipped: pipeline.drafts ? pipeline.drafts.skipped : 0,
