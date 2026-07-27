@@ -37,10 +37,10 @@ clasp push
 ## Menu actions
 
 - **Import Calendar** — sync events to both sheets, then archive old coaching rows
-- **Schedule** — daily sync at 9:00 AM and day-summary email at 5:00 PM `America/Chicago` (re-run after deploy)
+- **Schedule** — installs sync triggers at `9:00, 12:00, 15:00, 17:00` `America/Chicago`. Each run saves a report; the **last** run (no later hours left today) emails the combined summary (new + deleted events only — not row updates)
 - **Organize Drive Inbox** — match inbox files by meeting ID + date, apply `rules`, copy/rename, write URL columns
 - **Create Email Drafts** — drafts for selected `Coaching events` rows with `email=yesEmail`; greeting uses `rules.firstName`
-- **Organize Inbox + Email Drafts** — runs organizer then pending drafts in one step
+- **Organize Inbox + Email Drafts** — runs organizer then pending drafts in one step (no day-summary email)
 
 ## Import routing
 
@@ -61,9 +61,9 @@ Re-run **Import Calendar** after header changes to repopulate columns.
 2. Python uploads files to the Drive **inbox** as `{zoom_meeting_id}-{MM.DD.YY}.{ext}`
 3. Run **Organize Drive Inbox** (or **Organize Inbox + Email Drafts**) — matches by meeting ID + date, applies `rules` templates, copies/renames, fills URL columns
 4. Email drafts are created on schedule, via the combined menu, or **Create Email Drafts** for selected rows when `email=yesEmail` and required URLs are present
-5. At **5:00 PM** (or after the last pipeline run at/after that hour), a summary email is sent: imports, draft status per event, organized file paths, and why drafts were skipped (`noEmail` or missing files)
+5. Each scheduled sync saves a run report. The **last** scheduled job of the day (checks remaining `SYNC_HOURS`) emails the combined summary: new/deleted events, draft status, organized file paths, and skip reasons (`noEmail` or missing files). Existing-row updates are omitted from the email.
 
-Re-run **Calendar Tools → Schedule** after deploy to refresh sync + summary triggers.
+Re-run **Calendar Tools → Schedule** after deploy to refresh sync triggers.
 
 ## Title parsing
 

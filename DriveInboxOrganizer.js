@@ -18,7 +18,6 @@ function organizeDriveInbox() {
     return result;
   }
 
-  recordDailyOrganize_(result);
   notifyUser_(formatDriveInboxSummary_(result), 'Drive Inbox');
   return result;
 }

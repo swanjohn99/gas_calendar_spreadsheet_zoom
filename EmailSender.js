@@ -8,7 +8,6 @@ function createEmailDraftsForSelection() {
   }
 
   var result = createEmailDraftsForRows_(sheet, selectedRows);
-  recordDailyDrafts_(result);
   var summary = 'Drafts created: ' + result.created + ', skipped: ' + result.skipped + ', errors: ' + result.errors + '.';
   if (result.messages.length) {
     summary += ' ' + result.messages.slice(0, 3).join(' | ');

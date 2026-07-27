@@ -12,10 +12,10 @@ function onOpen() {
 
 /**
  * Combined menu: organize inbox then create pending email drafts.
+ * Does not send the day-summary email (only the last scheduled job does).
  */
 function organizeInboxAndCreateDrafts() {
   var result = runOrganizeAndDraftsPipeline_({ source: 'menu' });
   notifyUser_(result.message, 'Organize + Drafts');
-  maybeSendDailySummaryAfterRun_(result);
   return result;
 }
