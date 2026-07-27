@@ -16,8 +16,28 @@ function runCalendarSync() {
 function runScheduledSync() {
   var importResult = syncCalendarEvents_();
   var archived = archiveOldEvents_();
-  var pipeline = runOrganizeAndDraftsPipeline_({ source: 'scheduled' });
+  var pipeline;
+  try {
+    pipeline = runOrganizeAndDraftsPipeline_({ source: 'scheduled' });
+  } catch (error) {
+    Logger.log('Organize/drafts pipeline failed: ' + error);
+    pipeline = {
+      ok: false,
+      source: 'scheduled',
+      drive: {
+        ok: false,
+        copied: 0,
+        skipped: 0,
+        deduped: 0,
+        items: [],
+        message: 'Drive/drafts error: ' + error
+      },
+      drafts: { created: 0, skipped: 0, errors: 1, details: [], messages: [] },
+      message: 'Pipeline error: ' + error
+    };
+  }
 
+  // Always persist this run (including import new/deleted) even if organize/drafts did nothing.
   var runReport = buildScheduledRunReport_(importResult, pipeline, archived);
   appendDailyRunReport_(runReport);
 
