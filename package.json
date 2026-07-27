@@ -1,0 +1,11 @@
+{
+  "name": "gas_calendar_to_spreadsheet_rest",
+  "private": true,
+  "description": "Google Apps Script project; clasp used by GitHub Actions to deploy",
+  "scripts": {
+    "push": "clasp push --force"
+  },
+  "devDependencies": {
+    "@google/clasp": "3.3.0"
+  }
+}

@@ -36,7 +36,7 @@ clasp push
 
 ### GitHub Actions deploy
 
-On every push to `main`, [`.github/workflows/clasp-push.yml`](.github/workflows/clasp-push.yml) runs `clasp push --force`.
+On every push to `main`, [`.github/workflows/clasp-push.yml`](.github/workflows/clasp-push.yml) runs `npx clasp push --force`. Clasp is installed via `npm ci` with the npm dependency cache (see `package-lock.json`), so installs are fast after the first run.
 
 Add these repository secrets (**Settings → Secrets and variables → Actions**):
 

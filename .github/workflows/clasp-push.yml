@@ -16,9 +16,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: npm
 
       - name: Install clasp
-        run: npm install -g @google/clasp
+        run: npm ci
 
       - name: Write clasp credentials
         env:
@@ -33,4 +34,4 @@ jobs:
           printf '%s\n' "$CLASP_JSON" > .clasp.json
 
       - name: Push to Apps Script
-        run: clasp push --force
+        run: npx clasp push --force
