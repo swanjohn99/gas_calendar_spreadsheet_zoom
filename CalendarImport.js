@@ -114,12 +114,9 @@ function buildScheduledRunReport_(importResult, pipeline, archived) {
 
 function syncCalendarEvents_() {
   var config = getConfig_();
-  var trainingSheet = getEventsSheet_();
-  var nonTrainingSheet = getNonTrainingEventsSheet_();
-  var trainingExisting = getSheetDataObjects_(trainingSheet, config.headers);
-  var nonTrainingExisting = getSheetDataObjects_(nonTrainingSheet, config.nonTrainingHeaders);
-  var trainingById = buildExistingById_(trainingExisting.rows);
-  var nonTrainingById = buildExistingById_(nonTrainingExisting.rows);
+  var sheet = getEventsSheet_();
+  var existing = getSheetDataObjects_(sheet, config.headers);
+  var existingById = buildExistingById_(existing.rows);
 
   var calendar = CalendarApp.getCalendarById(config.calendarId);
   if (!calendar) {
@@ -133,9 +130,7 @@ function syncCalendarEvents_() {
   end.setDate(end.getDate() + config.lookaheadDays);
 
   var events = calendar.getEvents(start, end);
-  var trainingRejected = {};
-  var nonTrainingRejected = {};
-  var calendarColorCache = {};
+  var rejected = {};
   var rulesMap = buildRulesMap_();
   var newEvents = [];
   var updatedCount = 0;
@@ -145,36 +140,18 @@ function syncCalendarEvents_() {
     var hasZoom = hasZoomLinkInLocation_(event.getLocation(), config.zoomLocationPattern);
 
     if (!hasZoom) {
-      trainingRejected[eventId] = true;
-      nonTrainingRejected[eventId] = true;
+      rejected[eventId] = true;
       return;
     }
 
     var mapped = mapCalendarEventToRow_(event, rulesMap);
-    var sheetName;
-    var action;
-
-    if (isGreenEventColor_(event, calendarColorCache)) {
-      action = upsertEventRow_(
-        trainingSheet,
-        mapped,
-        trainingById,
-        config.headers,
-        config.preservedColumns
-      );
-      nonTrainingRejected[eventId] = true;
-      sheetName = config.eventsSheetName;
-    } else {
-      action = upsertEventRow_(
-        nonTrainingSheet,
-        mapped,
-        nonTrainingById,
-        config.nonTrainingHeaders,
-        config.nonTrainingPreservedColumns
-      );
-      trainingRejected[eventId] = true;
-      sheetName = config.nonTrainingEventsSheetName;
-    }
+    var action = upsertEventRow_(
+      sheet,
+      mapped,
+      existingById,
+      config.headers,
+      config.preservedColumns
+    );
 
     if (action === 'created') {
       newEvents.push({
@@ -184,32 +161,24 @@ function syncCalendarEvents_() {
         zoom_meeting_id: mapped.zoom_meeting_id,
         start: mapped.start,
         email: mapped.email,
-        sheet: sheetName
+        sheet: config.eventsSheetName
       });
     } else {
       updatedCount++;
     }
   });
 
-  var deletedTraining = removeRejectedEventRows_(
-    trainingSheet,
-    trainingExisting.rows,
-    trainingRejected,
+  var deletedEvents = removeRejectedEventRows_(
+    sheet,
+    existing.rows,
+    rejected,
     config.eventsSheetName
-  );
-  var deletedNonTraining = removeRejectedEventRows_(
-    nonTrainingSheet,
-    nonTrainingExisting.rows,
-    nonTrainingRejected,
-    config.nonTrainingEventsSheetName
   );
 
   return {
     newEvents: newEvents,
-    deletedEvents: deletedTraining.concat(deletedNonTraining),
-    updatedCount: updatedCount,
-    training: newEvents.filter(function (e) { return e.sheet === config.eventsSheetName; }).length,
-    nonTraining: newEvents.filter(function (e) { return e.sheet === config.nonTrainingEventsSheetName; }).length
+    deletedEvents: deletedEvents,
+    updatedCount: updatedCount
   };
 }
 
@@ -239,39 +208,6 @@ function upsertEventRow_(sheet, mapped, existingById, headers, preservedColumns)
   appendRowObject_(sheet, mapped, headers);
   existingById[mapped.event_id] = { sheetRow: sheet.getLastRow(), data: mapped };
   return 'created';
-}
-
-function isGreenEventColor_(event, calendarColorCache) {
-  var config = getConfig_();
-  var eventColor = String(event.getColor() || '');
-
-  if (eventColor) {
-    return config.coachingEventColorIds.indexOf(eventColor) !== -1;
-  }
-
-  var calendarId = event.getOriginalCalendarId() || config.calendarId;
-  var calendarColorId = getCalendarColorId_(calendarId, calendarColorCache || {});
-  return config.coachingCalendarColorIds.indexOf(calendarColorId) !== -1;
-}
-
-function getCalendarColorId_(calendarId, cache) {
-  var id = String(calendarId || '');
-  if (!id) {
-    return '';
-  }
-  if (Object.prototype.hasOwnProperty.call(cache, id)) {
-    return cache[id];
-  }
-
-  try {
-    var calendarListEntry = Calendar.CalendarList.get(id);
-    cache[id] = String((calendarListEntry && calendarListEntry.colorId) || '');
-  } catch (error) {
-    Logger.log('Calendar color lookup failed for ' + id + ': ' + error);
-    cache[id] = '';
-  }
-
-  return cache[id];
 }
 
 function hasZoomLinkInLocation_(location, pattern) {

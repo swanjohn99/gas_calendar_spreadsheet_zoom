@@ -7,35 +7,24 @@ function doGet(e) {
     return createJsonResponse_({ ok: false, error: 'Unauthorized', status: 401 });
   }
 
+  // type=non_training|all → all due meetings; default → due + empty email_draft_saved
   var type = String(params.type || 'training').toLowerCase();
-  if (type === 'non_training') {
-    return createJsonResponse_(getNonTrainingMeetingsPayload_(config, params));
-  }
-
-  return createJsonResponse_(getTrainingMeetingsPayload_(config, params));
+  var requireEmptyDraft = type !== 'non_training' && type !== 'all';
+  return createJsonResponse_(getMeetingsPayload_(config, params, requireEmptyDraft));
 }
 
-function getTrainingMeetingsPayload_(config, params) {
+function getMeetingsPayload_(config, params, requireEmptyDraft) {
   var sheet = getEventsSheet_();
   var data = getSheetDataObjects_(sheet, config.headers);
   var rows = data.rows
     .filter(function (row) {
-      return isEmailDraftSavedEmpty_(row.data.email_draft_saved) &&
-        isMeetingStartOnOrBeforeToday_(row.data.start, config.timezone);
-    })
-    .map(function (row) {
-      return mapPendingMeetingRow_(row.data);
-    });
-
-  return buildMeetingsPayload_(config, rows, params);
-}
-
-function getNonTrainingMeetingsPayload_(config, params) {
-  var sheet = getNonTrainingEventsSheet_();
-  var data = getSheetDataObjects_(sheet, config.nonTrainingHeaders);
-  var rows = data.rows
-    .filter(function (row) {
-      return isMeetingStartOnOrBeforeToday_(row.data.start, config.timezone);
+      if (!isMeetingStartOnOrBeforeToday_(row.data.start, config.timezone)) {
+        return false;
+      }
+      if (requireEmptyDraft && !isEmailDraftSavedEmpty_(row.data.email_draft_saved)) {
+        return false;
+      }
+      return true;
     })
     .map(function (row) {
       return mapPendingMeetingRow_(row.data);

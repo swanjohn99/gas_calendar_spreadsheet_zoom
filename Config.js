@@ -1,8 +1,12 @@
 var CONFIG = {
-  EVENTS_SHEET_NAME: 'Coaching events',
-  LEGACY_COACHING_SHEET_NAMES: ['Events', 'TrainingEvents'],
-  NON_TRAINING_EVENTS_SHEET_NAME: 'Non-Coaching events',
-  LEGACY_NON_COACHING_SHEET_NAMES: ['Non-Training Events'],
+  EVENTS_SHEET_NAME: 'events',
+  LEGACY_EVENTS_SHEET_NAMES: [
+    'Coaching events',
+    'Non-Coaching events',
+    'Events',
+    'TrainingEvents',
+    'Non-Training Events'
+  ],
   RULES_SHEET_NAME: 'rules',
   SCRIPT_PROPERTY_KEYS: {
     API_KEY: 'API_KEY',
@@ -32,12 +36,7 @@ var CONFIG = {
   EMAIL_BODY_PARAGRAPH_QUESTIONS: "If you have any questions or would like to dive deeper into anything that was discussed, please don't hesitate to reach out.",
   EMAIL_BODY_SIGNOFF: 'Warm regards,\nKara',
   PRESERVED_COLUMNS: ['email_draft_saved', 'video_url', 'pdf_url', 'audio_url', 'transcript_url', 'chat_url'],
-  NON_TRAINING_PRESERVED_COLUMNS: ['video_url', 'pdf_url', 'audio_url', 'transcript_url', 'chat_url'],
   RULES_YES_EMAIL: 'yesEmail',
-  // Event color space: Sage (2), Basil (10)
-  COACHING_EVENT_COLOR_IDS: ['2', '10'],
-  // Calendar color space: Eucalyptus (7), Basil (8), Pistachio (9), Avocado (10), Sage (13)
-  COACHING_CALENDAR_COLOR_IDS: ['7', '8', '9', '10', '13'],
   HEADERS: [
     'event_id',
     'title',
@@ -55,23 +54,6 @@ var CONFIG = {
     'audio_url',
     'transcript_url',
     'chat_url'
-  ],
-  NON_TRAINING_HEADERS: [
-    'event_id',
-    'title',
-    'program',
-    'location',
-    'zoom_meeting_id',
-    'start',
-    'end',
-    'attendee_email',
-    'updated',
-    'email',
-    'video_url',
-    'pdf_url',
-    'audio_url',
-    'transcript_url',
-    'chat_url'
   ]
 };
 
@@ -80,7 +62,6 @@ function getConfig_() {
   var keys = CONFIG.SCRIPT_PROPERTY_KEYS;
   return {
     eventsSheetName: CONFIG.EVENTS_SHEET_NAME,
-    nonTrainingEventsSheetName: CONFIG.NON_TRAINING_EVENTS_SHEET_NAME,
     calendarId: props.getProperty(keys.CALENDAR_ID) || CONFIG.CALENDAR_ID,
     lookbackDays: CONFIG.LOOKBACK_DAYS,
     lookaheadDays: CONFIG.LOOKAHEAD_DAYS,
@@ -102,12 +83,8 @@ function getConfig_() {
     emailBodyParagraphQuestions: CONFIG.EMAIL_BODY_PARAGRAPH_QUESTIONS,
     emailBodySignoff: CONFIG.EMAIL_BODY_SIGNOFF,
     preservedColumns: CONFIG.PRESERVED_COLUMNS,
-    nonTrainingPreservedColumns: CONFIG.NON_TRAINING_PRESERVED_COLUMNS,
     rulesYesEmail: CONFIG.RULES_YES_EMAIL,
-    coachingEventColorIds: CONFIG.COACHING_EVENT_COLOR_IDS,
-    coachingCalendarColorIds: CONFIG.COACHING_CALENDAR_COLOR_IDS,
     headers: CONFIG.HEADERS,
-    nonTrainingHeaders: CONFIG.NON_TRAINING_HEADERS,
     apiKey: props.getProperty(keys.API_KEY),
     driveInboxFolderId: props.getProperty(keys.DRIVE_INBOX_FOLDER_ID),
     clientMeetingsRootFolderId: props.getProperty(keys.CLIENT_MEETINGS_ROOT_FOLDER_ID)
