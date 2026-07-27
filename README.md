@@ -61,7 +61,7 @@ Re-run **Import Calendar** after header changes to repopulate columns.
 2. Python uploads files to the Drive **inbox** as `{zoom_meeting_id}-{MM.DD.YY}.{ext}`
 3. Run **Organize Drive Inbox** (or **Organize Inbox + Email Drafts**) — matches by meeting ID + date, applies `rules` templates, copies/renames, fills URL columns
 4. Email drafts are created on schedule, via the combined menu, or **Create Email Drafts** for selected rows when `email=yesEmail` and required URLs are present
-5. Each scheduled sync saves a run report (organize + drafts + new/deleted events). The **last** scheduled job of the day emails the combined summary. File organize and draft actions are always included—even when only existing rows were updated and nothing was newly imported/deleted.
+5. Each scheduled sync saves a run report (organize + drafts + new/deleted events). The **last** scheduled job emails the combined summary. Organize/drafts lead the email (may be empty). **Event import history is always included**, even when no files were organized and no drafts were created.
 
 Re-run **Calendar Tools → Schedule** after deploy to refresh sync triggers.
 
