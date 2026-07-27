@@ -37,9 +37,10 @@ clasp push
 ## Menu actions
 
 - **Import Calendar** — sync events to both sheets, then archive old coaching rows
-- **Schedule** — daily trigger at 9:00 AM `America/Chicago`: import, archive, **Organize Drive Inbox**, and **create email drafts** for eligible coaching rows
-- **Organize Drive Inbox** — copy inbox files into meeting folders and write artifact URLs immediately (`Coaching events` only); skips duplicates if sheet URL or destination file already exists; inbox originals stay in place
-- **Create Email Drafts** — builds coaching follow-up drafts for selected `Coaching events` rows with `email=yesEmail`; greeting uses `rules.firstName`; sets `email_draft_saved`
+- **Schedule** — daily sync at 9:00 AM and day-summary email at 5:00 PM `America/Chicago` (re-run after deploy)
+- **Organize Drive Inbox** — match inbox files by meeting ID + date, apply `rules`, copy/rename, write URL columns
+- **Create Email Drafts** — drafts for selected `Coaching events` rows with `email=yesEmail`; greeting uses `rules.firstName`
+- **Organize Inbox + Email Drafts** — runs organizer then pending drafts in one step
 
 ## Import routing
 
@@ -58,10 +59,11 @@ Re-run **Import Calendar** after header changes to repopulate columns.
 
 1. Chrome extension calls **GET** coaching API for pending meetings
 2. Python uploads files to the Drive **inbox** as `{zoom_meeting_id}-{MM.DD.YY}.{ext}`
-3. Run **Organize Drive Inbox** — matches by meeting ID + date, applies `rules` templates, copies/renames, fills URL columns
-4. Email drafts are created automatically on schedule (or run **Create Email Drafts** manually for selected rows) when all required URLs are present
+3. Run **Organize Drive Inbox** (or **Organize Inbox + Email Drafts**) — matches by meeting ID + date, applies `rules` templates, copies/renames, fills URL columns
+4. Email drafts are created on schedule, via the combined menu, or **Create Email Drafts** for selected rows when `email=yesEmail` and required URLs are present
+5. At **5:00 PM** (or after the last pipeline run at/after that hour), a summary email is sent: imports, draft status per event, organized file paths, and why drafts were skipped (`noEmail` or missing files)
 
-Re-run **Calendar Tools → Schedule** after deploy to replace an old `runCalendarSync` trigger with `runScheduledSync`.
+Re-run **Calendar Tools → Schedule** after deploy to refresh sync + summary triggers.
 
 ## Title parsing
 

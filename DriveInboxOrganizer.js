@@ -4,11 +4,6 @@
  *
  * Inbox filename: `{zoomMeetingId}-{MM.DD.YY}.{ext}`
  * Optional chat: `{zoomMeetingId}-{MM.DD.YY}-chat.txt`
- *
- * Setup:
- * 1. Set DRIVE_INBOX_FOLDER_ID and CLIENT_MEETINGS_ROOT_FOLDER_ID in Script Properties.
- * 2. Maintain a `rules` sheet (title → folderPath + artifact filenames).
- * 3. Calendar Tools → Organize Drive Inbox.
  */
 
 var DRIVE_INBOX_ORGANIZER = {
@@ -23,6 +18,7 @@ function organizeDriveInbox() {
     return result;
   }
 
+  recordDailyOrganize_(result);
   notifyUser_(formatDriveInboxSummary_(result), 'Drive Inbox');
   return result;
 }
@@ -35,6 +31,7 @@ function organizeDriveInbox_() {
       copied: 0,
       skipped: 0,
       deduped: 0,
+      items: [],
       message: 'Set DRIVE_INBOX_FOLDER_ID and CLIENT_MEETINGS_ROOT_FOLDER_ID in Script Properties.'
     };
   }
@@ -47,6 +44,7 @@ function organizeDriveInbox_() {
   var copied = 0;
   var skipped = 0;
   var deduped = 0;
+  var items = [];
 
   while (files.hasNext()) {
     var file = files.next();
@@ -108,6 +106,7 @@ function organizeDriveInbox_() {
       continue;
     }
 
+    var finalPath = segments.join('/') + '/' + targetFileName;
     var targetFolder = ensureFolderPathFromRoot_(config.clientMeetingsRootId, segments);
     var existingFile = findFileInFolderByName_(targetFolder, targetFileName);
     if (existingFile) {
@@ -119,7 +118,9 @@ function organizeDriveInbox_() {
         artifact,
         existingFile.getUrl()
       );
+      rowData[urlColumn] = existingFile.getUrl();
       deduped++;
+      items.push(buildOrganizeItem_(rowData, parsed, fileName, finalPath, 'deduped', existingFile.getUrl()));
       continue;
     }
 
@@ -131,7 +132,9 @@ function organizeDriveInbox_() {
       artifact,
       copiedFile.getUrl()
     );
+    rowData[urlColumn] = copiedFile.getUrl();
     copied++;
+    items.push(buildOrganizeItem_(rowData, parsed, fileName, finalPath, 'copied', copiedFile.getUrl()));
   }
 
   return {
@@ -139,7 +142,22 @@ function organizeDriveInbox_() {
     copied: copied,
     skipped: skipped,
     deduped: deduped,
+    items: items,
     message: formatDriveInboxSummary_({ copied: copied, skipped: skipped, deduped: deduped })
+  };
+}
+
+function buildOrganizeItem_(rowData, parsed, inboxName, finalPath, status, url) {
+  return {
+    event_id: String(rowData.event_id || ''),
+    title: String(rowData.title || ''),
+    zoom_meeting_id: parsed.meetingId,
+    dateStamp: parsed.dateStamp,
+    artifact: parsed.artifact,
+    inboxName: inboxName,
+    finalPath: finalPath,
+    status: status,
+    url: url || ''
   };
 }
 

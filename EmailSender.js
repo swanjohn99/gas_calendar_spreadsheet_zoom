@@ -8,6 +8,7 @@ function createEmailDraftsForSelection() {
   }
 
   var result = createEmailDraftsForRows_(sheet, selectedRows);
+  recordDailyDrafts_(result);
   var summary = 'Drafts created: ' + result.created + ', skipped: ' + result.skipped + ', errors: ' + result.errors + '.';
   if (result.messages.length) {
     summary += ' ' + result.messages.slice(0, 3).join(' | ');
@@ -19,23 +20,11 @@ function createEmailDraftsForPending_() {
   var config = getConfig_();
   var sheet = getEventsSheet_();
   var data = getSheetDataObjects_(sheet, config.headers);
-  var eligibleRows = data.rows.filter(function (row) {
-    if (row.data.email_draft_saved) {
-      return false;
-    }
-    if (!isYesEmailFlag_(row.data.email)) {
-      return false;
-    }
-    if (!isMeetingStartOnOrBeforeToday_(row.data.start, config.timezone)) {
-      return false;
-    }
-    if (!resolveRecipientEmail_(row.data)) {
-      return false;
-    }
-    return getMissingArtifactUrls_(row.data).length === 0;
+  var dueRows = data.rows.filter(function (row) {
+    return isMeetingStartOnOrBeforeToday_(row.data.start, config.timezone);
   });
 
-  return createEmailDraftsForRows_(sheet, eligibleRows);
+  return createEmailDraftsForRows_(sheet, dueRows);
 }
 
 function createEmailDraftsForRows_(sheet, rows) {
@@ -47,11 +36,27 @@ function createEmailDraftsForRows_(sheet, rows) {
   var skipped = 0;
   var errors = 0;
   var messages = [];
+  var details = [];
 
   rows.forEach(function (row) {
+    var detailBase = {
+      event_id: String(row.data.event_id || ''),
+      title: String(row.data.title || ''),
+      program: String(row.data.program || ''),
+      zoom_meeting_id: String(row.data.zoom_meeting_id || ''),
+      start: String(row.data.start || ''),
+      email: String(row.data.email || ''),
+      sheetRow: row.sheetRow
+    };
+
     if (row.data.email_draft_saved) {
       skipped++;
       messages.push(logDraftSkip_(row, 'already_drafted', 'email_draft_saved=' + row.data.email_draft_saved));
+      details.push(Object.assign({}, detailBase, {
+        status: 'already_drafted',
+        reason: 'email_draft_saved=' + row.data.email_draft_saved,
+        draftSaved: true
+      }));
       return;
     }
 
@@ -62,6 +67,11 @@ function createEmailDraftsForRows_(sheet, rows) {
         'email_flag_not_yes',
         'email=' + formatLogValue_(row.data.email)
       ));
+      details.push(Object.assign({}, detailBase, {
+        status: 'skipped',
+        reason: 'noEmail flag (email=' + String(row.data.email || '') + ')',
+        draftSaved: false
+      }));
       return;
     }
 
@@ -73,12 +83,22 @@ function createEmailDraftsForRows_(sheet, rows) {
         'invalid_attendee_email',
         'attendee_email=' + formatLogValue_(row.data.attendee_email)
       ));
+      details.push(Object.assign({}, detailBase, {
+        status: 'skipped',
+        reason: 'invalid or missing attendee_email',
+        draftSaved: false
+      }));
       return;
     }
 
     var startDate = parseSheetDate_(row.data.start);
     if (startDate && startDate.getTime() > new Date().getTime()) {
       skipped++;
+      details.push(Object.assign({}, detailBase, {
+        status: 'skipped',
+        reason: 'meeting starts in the future',
+        draftSaved: false
+      }));
       return;
     }
 
@@ -87,6 +107,11 @@ function createEmailDraftsForRows_(sheet, rows) {
       skipped++;
       logDraftSkip_(row, 'missing_artifact_urls', 'missing=' + missingArtifacts.join(', '));
       messages.push('row ' + row.sheetRow + ': missing_artifact_urls');
+      details.push(Object.assign({}, detailBase, {
+        status: 'skipped',
+        reason: 'lack of saved files (' + missingArtifacts.join(', ') + ')',
+        draftSaved: false
+      }));
       return;
     }
 
@@ -101,9 +126,17 @@ function createEmailDraftsForRows_(sheet, rows) {
       };
 
       GmailApp.createDraft(recipientEmail, subject, plainBody, options);
-      sheet.getRange(row.sheetRow, emailDraftSavedIndex + 1).setValue(formatDateValue_(new Date()));
+      var savedAt = formatDateValue_(new Date());
+      sheet.getRange(row.sheetRow, emailDraftSavedIndex + 1).setValue(savedAt);
+      row.data.email_draft_saved = savedAt;
       Logger.log(formatDraftLog_(row, 'draft_created', 'to=' + recipientEmail));
       created++;
+      details.push(Object.assign({}, detailBase, {
+        status: 'drafted',
+        reason: '',
+        draftSaved: true,
+        recipient: recipientEmail
+      }));
     } catch (error) {
       var errorMsg = formatDraftLog_(
         row,
@@ -115,10 +148,21 @@ function createEmailDraftsForRows_(sheet, rows) {
       Logger.log(errorMsg);
       messages.push('row ' + row.sheetRow + ': draft_failed');
       errors++;
+      details.push(Object.assign({}, detailBase, {
+        status: 'error',
+        reason: String(error),
+        draftSaved: false
+      }));
     }
   });
 
-  return { created: created, skipped: skipped, errors: errors, messages: messages };
+  return {
+    created: created,
+    skipped: skipped,
+    errors: errors,
+    messages: messages,
+    details: details
+  };
 }
 
 function resolveRecipientEmail_(rowData) {
@@ -182,8 +226,8 @@ function buildCoachingEmailSubject_(rowData, config) {
   return config.emailSubjectPrefix + formattedDate;
 }
 
-function buildCoachingEmailPlainBody_(rowData, config) {
-  var firstName = getAttendeeFirstName_(rowData);
+function buildCoachingEmailPlainBody_(rowData, config, firstName) {
+  firstName = firstName || getRulesFirstName_(rowData, buildRulesMap_());
   var sessionName = getSessionName_(rowData);
   var meetingDay = getMeetingDayPhrase_(parseSheetDate_(rowData.start), config.timezone);
   var recordingUrl = String(rowData.video_url || '').trim();
@@ -214,8 +258,8 @@ function buildCoachingEmailPlainBody_(rowData, config) {
   return lines.join('\n');
 }
 
-function buildCoachingEmailHtmlBody_(rowData, config) {
-  var firstName = getAttendeeFirstName_(rowData);
+function buildCoachingEmailHtmlBody_(rowData, config, firstName) {
+  firstName = firstName || getRulesFirstName_(rowData, buildRulesMap_());
   var sessionName = getSessionName_(rowData);
   var meetingDay = getMeetingDayPhrase_(parseSheetDate_(rowData.start), config.timezone);
   var recordingUrl = String(rowData.video_url || '').trim();
@@ -282,8 +326,8 @@ function getDriveBlobFromUrl_(url) {
   return DriveApp.getFileById(fileId).getBlob();
 }
 
-function getAttendeeFirstName_(rowData) {
-  var rule = lookupRuleByTitle_(buildRulesMap_(), rowData.title);
+function getRulesFirstName_(rowData, rulesMap) {
+  var rule = lookupRuleByTitle_(rulesMap || buildRulesMap_(), rowData.title);
   var firstName = rule ? String(rule.firstName || '').trim() : '';
   if (firstName) {
     return firstName;

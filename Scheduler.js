@@ -1,6 +1,7 @@
 function scheduleCalendarSync() {
   deleteTriggersForHandler_('runCalendarSync');
   deleteTriggersForHandler_('runScheduledSync');
+  deleteTriggersForHandler_('sendDailySummaryEmail');
 
   var config = getConfig_();
   ScriptApp.newTrigger('runScheduledSync')
@@ -10,9 +11,16 @@ function scheduleCalendarSync() {
     .inTimezone(config.timezone)
     .create();
 
+  ScriptApp.newTrigger('sendDailySummaryEmail')
+    .timeBased()
+    .atHour(config.summaryHour)
+    .everyDays(1)
+    .inTimezone(config.timezone)
+    .create();
+
   showToast_(
-    'Daily scheduled sync at ' + config.syncHour + ':00 (' + config.timezone + '): ' +
-      'import, archive, and Drive inbox organizer.'
+    'Daily sync at ' + config.syncHour + ':00; day summary email at ' +
+      config.summaryHour + ':00 (' + config.timezone + ').'
   );
 }
 

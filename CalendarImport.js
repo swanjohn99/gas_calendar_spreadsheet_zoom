@@ -5,6 +5,7 @@ function importCalendar() {
 function runCalendarSync() {
   var importCounts = syncCalendarEvents_();
   var archived = archiveOldEvents_();
+  recordDailyImport_(importCounts);
   showToast_(
     'Imported ' + importCounts.training + ' coaching, ' + importCounts.nonTraining +
       ' non-coaching. Archived ' + archived + ' old events.'
@@ -14,21 +15,45 @@ function runCalendarSync() {
 function runScheduledSync() {
   var importCounts = syncCalendarEvents_();
   var archived = archiveOldEvents_();
-  var drive = organizeDriveInbox_();
+  recordDailyImport_(importCounts);
+
+  var pipeline = runOrganizeAndDraftsPipeline_({ source: 'scheduled' });
   var summary = 'Scheduled sync: imported ' + importCounts.training + ' coaching, ' +
-    importCounts.nonTraining + ' non-coaching. Archived ' + archived + ' old events.';
-
-  if (drive.ok) {
-    summary += ' ' + drive.message;
-  } else {
-    summary += ' Drive inbox skipped: ' + drive.message;
-  }
-
-  var drafts = createEmailDraftsForPending_();
-  summary += ' Drafts: ' + drafts.created + ' created, ' + drafts.skipped + ' skipped, ' + drafts.errors + ' errors.';
+    importCounts.nonTraining + ' non-coaching. Archived ' + archived + ' old events. ' +
+    pipeline.message;
 
   Logger.log(summary);
   notifyUser_(summary, 'Scheduled Sync');
+  maybeSendDailySummaryAfterRun_(pipeline);
+}
+
+/**
+ * Organize inbox then create pending drafts. Records activity for the daily summary.
+ */
+function runOrganizeAndDraftsPipeline_(options) {
+  options = options || {};
+  var drive = organizeDriveInbox_();
+  var drafts = createEmailDraftsForPending_();
+
+  recordDailyOrganize_(drive);
+  recordDailyDrafts_(drafts);
+
+  var message = '';
+  if (drive.ok) {
+    message += drive.message;
+  } else {
+    message += 'Drive inbox skipped: ' + drive.message;
+  }
+  message += ' Drafts: ' + drafts.created + ' created, ' + drafts.skipped +
+    ' skipped, ' + drafts.errors + ' errors.';
+
+  return {
+    ok: !!drive.ok,
+    source: options.source || 'pipeline',
+    drive: drive,
+    drafts: drafts,
+    message: message
+  };
 }
 
 function syncCalendarEvents_() {
@@ -58,6 +83,7 @@ function syncCalendarEvents_() {
   var nonTrainingRejected = {};
   var calendarColorCache = {};
   var rulesMap = buildRulesMap_();
+  var importedEvents = [];
 
   events.forEach(function (event) {
     var eventId = event.getId();
@@ -70,6 +96,7 @@ function syncCalendarEvents_() {
     }
 
     var mapped = mapCalendarEventToRow_(event, rulesMap);
+    var sheetName;
 
     if (isGreenEventColor_(event, calendarColorCache)) {
       upsertEventRow_(
@@ -81,18 +108,29 @@ function syncCalendarEvents_() {
       );
       nonTrainingRejected[eventId] = true;
       trainingCount++;
-      return;
+      sheetName = config.eventsSheetName;
+    } else {
+      upsertEventRow_(
+        nonTrainingSheet,
+        mapped,
+        nonTrainingById,
+        config.nonTrainingHeaders,
+        config.nonTrainingPreservedColumns
+      );
+      trainingRejected[eventId] = true;
+      nonTrainingCount++;
+      sheetName = config.nonTrainingEventsSheetName;
     }
 
-    upsertEventRow_(
-      nonTrainingSheet,
-      mapped,
-      nonTrainingById,
-      config.nonTrainingHeaders,
-      config.nonTrainingPreservedColumns
-    );
-    trainingRejected[eventId] = true;
-    nonTrainingCount++;
+    importedEvents.push({
+      event_id: mapped.event_id,
+      title: mapped.title,
+      program: mapped.program,
+      zoom_meeting_id: mapped.zoom_meeting_id,
+      start: mapped.start,
+      email: mapped.email,
+      sheet: sheetName
+    });
   });
 
   removeRejectedEventRows_(trainingSheet, trainingExisting.rows, trainingRejected);
@@ -100,7 +138,8 @@ function syncCalendarEvents_() {
 
   return {
     training: trainingCount,
-    nonTraining: nonTrainingCount
+    nonTraining: nonTrainingCount,
+    events: importedEvents
   };
 }
 
