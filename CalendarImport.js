@@ -157,10 +157,9 @@ function syncCalendarEvents_() {
       newEvents.push({
         event_id: mapped.event_id,
         title: mapped.title,
-        program: mapped.program,
         zoom_meeting_id: mapped.zoom_meeting_id,
         start: mapped.start,
-        email: mapped.email,
+        emailFlag: mapped[config.emailFlagColumn],
         sheet: config.eventsSheetName
       });
     } else {
@@ -233,10 +232,9 @@ function removeRejectedEventRows_(sheet, rows, rejectedIds, sheetName) {
     deleted.push({
       event_id: String(row.data.event_id || ''),
       title: String(row.data.title || ''),
-      program: String(row.data.program || ''),
       zoom_meeting_id: String(row.data.zoom_meeting_id || ''),
       start: String(row.data.start || ''),
-      email: String(row.data.email || ''),
+      emailFlag: String(row.data[getConfig_().emailFlagColumn] || ''),
       sheet: sheetName || sheet.getName()
     });
     sheet.deleteRow(row.sheetRow);
@@ -247,20 +245,17 @@ function removeRejectedEventRows_(sheet, rows, rejectedIds, sheetName) {
 
 function mapCalendarEventToRow_(event, rulesMap) {
   var title = event.getTitle() || '';
-  var program = parseEventProgram_(title);
   var rule = lookupRuleByTitle_(rulesMap || {}, title);
-
-  return {
+  var config = getConfig_();
+  var row = {
     event_id: event.getId(),
     title: title,
-    program: program,
     location: event.getLocation() || '',
     zoom_meeting_id: extractZoomMeetingId_(event.getLocation()),
     start: formatDateValue_(event.getStartTime()),
     end: formatDateValue_(event.getEndTime()),
     attendee_email: getAttendeeEmail_(event),
     updated: formatDateValue_(event.getLastUpdated()),
-    email: rule ? String(rule.email || '').trim() : '',
     email_draft_saved: '',
     video_url: '',
     pdf_url: '',
@@ -268,27 +263,8 @@ function mapCalendarEventToRow_(event, rulesMap) {
     transcript_url: '',
     chat_url: ''
   };
-}
-
-function parseEventProgram_(rawTitle) {
-  var title = String(rawTitle || '').trim();
-  if (!title) {
-    return '';
-  }
-
-  var separatorIndex = -1;
-  for (var i = 0; i < title.length; i++) {
-    if (title.charAt(i) === '-' || title.charAt(i) === ':') {
-      separatorIndex = i;
-      break;
-    }
-  }
-
-  if (separatorIndex === -1) {
-    return title;
-  }
-
-  return title.substring(0, separatorIndex).trim();
+  row[config.emailFlagColumn] = rule ? String(rule.email || '').trim() : '';
+  return row;
 }
 
 function toCalendarApiEventId_(eventId) {

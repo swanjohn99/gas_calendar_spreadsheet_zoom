@@ -61,7 +61,6 @@ function mapPendingMeetingRow_(rowData) {
   return {
     zoom_meeting_id: zoomMeetingId,
     meeting_start_date: startDate ? formatDateValue_(startDate) : String(rowData.start || '').trim(),
-    program: String(rowData.program || '').trim(),
     title: String(rowData.title || '').trim()
   };
 }

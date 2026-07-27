@@ -309,7 +309,7 @@ function formatDailySummaryEmailBody_(report, config) {
         (index + 1) + '. [' + (event.sheet || '') + '] ' + (event.title || '(no title)') +
           ' | start ' + (event.start || '') +
           ' | meetingId ' + (event.zoom_meeting_id || '') +
-          ' | rules.email ' + (event.email || '')
+          ' | email (yes or no) ' + (event.emailFlag || event.email || '')
       );
     });
   }
