@@ -3,6 +3,7 @@ var CONFIG = {
   LEGACY_COACHING_SHEET_NAMES: ['Events', 'TrainingEvents'],
   NON_TRAINING_EVENTS_SHEET_NAME: 'Non-Coaching events',
   LEGACY_NON_COACHING_SHEET_NAMES: ['Non-Training Events'],
+  RULES_SHEET_NAME: 'rules',
   SCRIPT_PROPERTY_KEYS: {
     API_KEY: 'API_KEY',
     CALENDAR_ID: 'CALENDAR_ID',

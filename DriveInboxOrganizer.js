@@ -1,9 +1,14 @@
 /**
- * Drive inbox organizer — copy synced files into Client Meetings tree and write URLs.
+ * Drive inbox organizer — match inbox files by MeetingID-date, look up rules by title,
+ * rename from templates, copy into folderPath, write artifact URLs.
+ *
+ * Inbox filename: `{zoomMeetingId}-{MM.DD.YY}.{ext}`
+ * Optional chat: `{zoomMeetingId}-{MM.DD.YY}-chat.txt`
  *
  * Setup:
- * 1. Set DRIVE_INBOX_FOLDER_ID and CLIENT_MEETINGS_ROOT_FOLDER_ID in Script Properties (see Config.js).
- * 2. Add organizeDriveInbox to your onOpen menu.
+ * 1. Set DRIVE_INBOX_FOLDER_ID and CLIENT_MEETINGS_ROOT_FOLDER_ID in Script Properties.
+ * 2. Maintain a `rules` sheet (title → folderPath + artifact filenames).
+ * 3. Calendar Tools → Organize Drive Inbox.
  */
 
 var DRIVE_INBOX_ORGANIZER = {
@@ -34,9 +39,9 @@ function organizeDriveInbox_() {
     };
   }
 
-  var sheet = getEventsSheet_();
-  var sheetData = getSheetDataObjects_(sheet);
   var timezone = getConfig_().timezone;
+  var rulesMap = buildRulesMap_();
+  var rowIndex = buildMeetingRowIndex_(timezone);
   var inbox = DriveApp.getFolderById(config.inboxFolderId);
   var files = inbox.getFiles();
   var copied = 0;
@@ -52,37 +57,80 @@ function organizeDriveInbox_() {
       continue;
     }
 
-    var match = findRowAndArtifactForFile_(sheetData.rows, fileName, timezone);
-    if (!match) {
-      Logger.log('No row match for inbox file: ' + fileName);
+    var parsed = parseInboxMeetingFilename_(fileName);
+    if (!parsed) {
+      Logger.log('Inbox filename not MeetingID-date: ' + fileName);
       skipped++;
       continue;
     }
 
-    var row = match.row;
-    var artifact = match.artifact;
+    var rowEntry = rowIndex[parsed.meetingId + '|' + parsed.dateStamp];
+    if (!rowEntry) {
+      Logger.log('No sheet row for ' + parsed.meetingId + ' on ' + parsed.dateStamp + ': ' + fileName);
+      skipped++;
+      continue;
+    }
+
+    var rowData = rowEntry.data;
+    var rule = lookupRuleByTitle_(rulesMap, rowData.title);
+    if (!rule) {
+      Logger.log('No rules row for title: ' + rowData.title);
+      skipped++;
+      continue;
+    }
+
+    var vars = buildRulesReplacementVars_(rowData, rule, rowData.start, timezone);
+    if (!vars) {
+      Logger.log('Missing meeting start for row: ' + rowData.title);
+      skipped++;
+      continue;
+    }
+
+    var artifact = parsed.artifact;
     var urlColumn = getArtifactUrlColumn_(artifact);
-    if (urlColumn && String(row.data[urlColumn] || '').trim()) {
+    if (urlColumn && String(rowData[urlColumn] || '').trim()) {
       Logger.log('Deduped ' + fileName + ': sheet URL already set');
       deduped++;
       continue;
     }
 
-    var targetFolder = ensureMeetingFolderPath_(
-      config.clientMeetingsRootId,
-      row.data,
-      match.meetingDateIso
-    );
-    var existingFile = findFileInFolderByName_(targetFolder, fileName);
+    var targetFileName = getRuleArtifactFileName_(rule, artifact, vars);
+    if (!targetFileName) {
+      Logger.log('Empty rules filename for ' + artifact + ': ' + rowData.title);
+      skipped++;
+      continue;
+    }
+
+    var segments = getRuleFolderPathSegments_(rule, vars);
+    if (!segments.length) {
+      Logger.log('Empty rules folderPath for title: ' + rowData.title);
+      skipped++;
+      continue;
+    }
+
+    var targetFolder = ensureFolderPathFromRoot_(config.clientMeetingsRootId, segments);
+    var existingFile = findFileInFolderByName_(targetFolder, targetFileName);
     if (existingFile) {
-      Logger.log('Deduped ' + fileName + ': already in destination');
-      writeArtifactUrl_(sheet, sheetData.headerMap, row.sheetRow, artifact, existingFile.getUrl());
+      Logger.log('Deduped ' + fileName + ': already in destination as ' + targetFileName);
+      writeArtifactUrl_(
+        rowEntry.sheet,
+        rowEntry.headerMap,
+        rowEntry.sheetRow,
+        artifact,
+        existingFile.getUrl()
+      );
       deduped++;
       continue;
     }
 
-    var copiedFile = file.makeCopy(fileName, targetFolder);
-    writeArtifactUrl_(sheet, sheetData.headerMap, row.sheetRow, artifact, copiedFile.getUrl());
+    var copiedFile = file.makeCopy(targetFileName, targetFolder);
+    writeArtifactUrl_(
+      rowEntry.sheet,
+      rowEntry.headerMap,
+      rowEntry.sheetRow,
+      artifact,
+      copiedFile.getUrl()
+    );
     copied++;
   }
 
@@ -128,43 +176,75 @@ function isSegmentPartFile_(fileName) {
   return /_\d+\.[^.]+$/.test(fileName);
 }
 
-function findRowAndArtifactForFile_(rows, fileName, timezone) {
-  for (var i = 0; i < rows.length; i++) {
-    var row = rows[i];
-    var meetingDateIso = formatSheetDateOnly_(row.data.start, timezone);
-    if (!meetingDateIso) continue;
+/**
+ * `{meetingId}-{MM.DD.YY}.ext` or `{meetingId}-{MM.DD.YY}-chat.txt`
+ */
+function parseInboxMeetingFilename_(fileName) {
+  var match = String(fileName || '').match(
+    /^(\d+)\s*-\s*(\d{2}\.\d{2}\.\d{2})(?:\s*[-_]?\s*(chat|transcript))?\s*(\.[^.]+)$/i
+  );
+  if (!match) {
+    return null;
+  }
 
-    var expected = buildExpectedFilenames_(row.data, meetingDateIso);
-    var artifact = classifyArtifactByName_(fileName, expected);
-    if (artifact) {
-      return { row: row, artifact: artifact, meetingDateIso: meetingDateIso };
-    }
+  var meetingId = match[1];
+  var dateStamp = match[2];
+  var suffix = String(match[3] || '').toLowerCase();
+  var ext = String(match[4] || '').toLowerCase();
+  var artifact = classifyArtifactByExtension_(ext, suffix);
+  if (!artifact) {
+    return null;
+  }
+
+  return {
+    meetingId: meetingId,
+    dateStamp: dateStamp,
+    artifact: artifact,
+    extension: ext
+  };
+}
+
+function classifyArtifactByExtension_(ext, suffix) {
+  if (ext === '.mp4') return 'video';
+  if (ext === '.m4a') return 'audio';
+  if (ext === '.pdf') return 'meeting_summary';
+  if (ext === '.txt') {
+    if (suffix === 'chat') return 'chat';
+    return 'transcript';
   }
   return null;
 }
 
-function buildExpectedFilenames_(rowData, meetingDateIso) {
-  var stamp = formatMmDdYy_(meetingDateIso);
-  var program = sanitizeDriveName_(rowData.program);
-  var client = sanitizeDriveName_(
-    String(rowData.attendee_first_name || '') + ' ' + String(rowData.attendee_last_name || '')
+function buildMeetingRowIndex_(timezone) {
+  var index = {};
+  addSheetRowsToMeetingIndex_(index, getEventsSheet_(), null, timezone);
+  addSheetRowsToMeetingIndex_(
+    index,
+    getNonTrainingEventsSheet_(),
+    getConfig_().nonTrainingHeaders,
+    timezone
   );
-  return {
-    video: program + ' - ' + client + ' ' + stamp + '.mp4',
-    audio: program + ' Audio - ' + client + ' ' + stamp + '.m4a',
-    transcript: program + ' Transcript - ' + client + ' ' + stamp + '.txt',
-    chat: program + ' Chat - ' + client + ' ' + stamp + '.txt',
-    meeting_summary: 'Meeting Summary - ' + program + ' - ' + client + ' ' + stamp + '.pdf',
-  };
+  return index;
 }
 
-function classifyArtifactByName_(fileName, expected) {
-  if (fileName === expected.video) return 'video';
-  if (fileName === expected.audio) return 'audio';
-  if (fileName === expected.transcript) return 'transcript';
-  if (fileName === expected.chat) return 'chat';
-  if (fileName === expected.meeting_summary) return 'meeting_summary';
-  return null;
+function addSheetRowsToMeetingIndex_(index, sheet, headers, timezone) {
+  var sheetData = getSheetDataObjects_(sheet, headers);
+  for (var i = 0; i < sheetData.rows.length; i++) {
+    var row = sheetData.rows[i];
+    var meetingId = String(row.data.zoom_meeting_id || '').replace(/\D/g, '');
+    if (!meetingId) continue;
+    var meetingDateIso = formatSheetDateOnly_(row.data.start, timezone);
+    if (!meetingDateIso) continue;
+    var dateStamp = formatMmDdYy_(meetingDateIso);
+    var key = meetingId + '|' + dateStamp;
+    if (index[key]) continue;
+    index[key] = {
+      sheet: sheet,
+      headerMap: sheetData.headerMap,
+      sheetRow: row.sheetRow,
+      data: row.data
+    };
+  }
 }
 
 function formatMmDdYy_(meetingDateIso) {
@@ -181,18 +261,7 @@ function sanitizeDriveName_(value) {
     .replace(/\.$/, '');
 }
 
-function meetingFolderSegment_(meetingDateIso) {
-  return 'Coaching Call ' + formatMmDdYy_(meetingDateIso);
-}
-
-function ensureMeetingFolderPath_(rootId, rowData, meetingDateIso) {
-  var segments = [
-    sanitizeDriveName_(rowData.program),
-    sanitizeDriveName_(
-      String(rowData.attendee_first_name || '') + ' ' + String(rowData.attendee_last_name || '')
-    ),
-    meetingFolderSegment_(meetingDateIso),
-  ];
+function ensureFolderPathFromRoot_(rootId, segments) {
   var parentId = rootId;
   for (var s = 0; s < segments.length; s++) {
     parentId = getOrCreateChildFolder_(parentId, segments[s]);
