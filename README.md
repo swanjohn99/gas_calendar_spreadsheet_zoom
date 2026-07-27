@@ -54,7 +54,7 @@ If the workflow fails with `401`, re-run `clasp login` locally and update `CLASP
 - **Import Calendar** — sync Zoom events into `events`, then archive old rows
 - **Schedule** — installs sync triggers at `9:00, 12:00, 15:00, 17:00` `America/Chicago`. Each run saves a report; the **last** run (no later hours left today) emails the combined summary (new + deleted events only — not row updates)
 - **Organize Drive Inbox** — match inbox files by meeting ID + date, apply `rules`, copy/rename, write URL columns
-- **Create Email Drafts** — drafts for selected `events` rows with `email=yesEmail`; greeting uses `rules.firstName`
+- **Create Email Drafts** — drafts for selected `events` rows with `email (yes or no)=yesEmail`; greeting uses `rules.firstName`
 - **Organize Inbox + Email Drafts** — runs organizer then pending drafts in one step (no day-summary email)
 
 ## Import
@@ -70,18 +70,14 @@ Re-run **Import Calendar** after header changes to repopulate columns.
 1. Chrome extension calls **GET** API for pending meetings
 2. Python uploads files to the Drive **inbox** as `{zoom_meeting_id}-{MM.DD.YY}.{ext}`
 3. Run **Organize Drive Inbox** (or **Organize Inbox + Email Drafts**) — matches by meeting ID + date, applies `rules` templates, copies/renames, fills URL columns
-4. Email drafts are created on schedule, via the combined menu, or **Create Email Drafts** for selected rows when `email=yesEmail` and required URLs are present
+4. Email drafts are created on schedule, via the combined menu, or **Create Email Drafts** for selected rows when `email (yes or no)=yesEmail` and required URLs are present
 5. Each scheduled sync saves a run report (organize + drafts + new/deleted events). The **last** scheduled job emails the combined summary. Organize/drafts lead the email (may be empty). **Event import history is always included**, even when no files were organized and no drafts were created.
 
 Re-run **Calendar Tools → Schedule** after deploy to refresh sync triggers.
 
 ## Title parsing
 
-Calendar event titles are split on the first `-` or `:` for `program` only:
-
-- `Executive Coaching Call: Gary Tober` → `program` `Executive Coaching Call`
-- Full title stored in `title`
-- Attendee first/last name come from the `rules` sheet (matched by title), not event columns
+Full calendar title is stored in `title`. Attendee first/last name come from the `rules` sheet (matched by title), not event columns.
 
 ## Drive inbox + rules
 
@@ -104,7 +100,7 @@ Flow:
 3. Expand `folderPath` + artifact filename templates with `${firstName}` / `${lastName}` from **rules**, and meeting-start placeholders (`${current_year}`, `${current_quarter}`, `${currentDate}`, `${current_day}`)
 4. Copy into `{CLIENT_MEETINGS_ROOT}/{folderPath segments}/` under the template filename; write URL columns
 
-On calendar import, `email` on the event row is copied from the matching `rules.email` value (`yesEmail` / `noEmail`).
+On calendar import, `email (yes or no)` on the event row is copied from the matching `rules.email` value (`yesEmail` / `noEmail`).
 
 `rules` columns: `ruleType`, `title`, `firstName`, `lastName`, `folderPath`, `pdf_FileName`, `mp4_FileName`, `m4a_FileName`, `transcript_FileName`, `chat_FileName`, `email`
 
@@ -122,7 +118,7 @@ Re-running **Organize Drive Inbox** is idempotent: if the artifact URL is alread
 | `transcript_url` | transcript |
 | `chat_url` | chat |
 
-**Create Email Drafts** requires `email=yesEmail`, `video_url`, `pdf_url`, `audio_url`, and `transcript_url` (`chat_url` optional). Greeting uses `firstName` from `rules`. Email body links to `video_url`; attaches PDF, audio, transcript, and chat (if present).
+**Create Email Drafts** requires `email (yes or no)=yesEmail`, `video_url`, `pdf_url`, `audio_url`, and `transcript_url` (`chat_url` optional). Greeting uses `firstName` from `rules`. Email body links to `video_url`; attaches PDF, audio, transcript, and chat (if present).
 
 ## API
 
@@ -147,7 +143,6 @@ Returns `events` rows where `email_draft_saved` is empty and meeting `start` dat
     {
       "zoom_meeting_id": "87824741880",
       "meeting_start_date": "2026-07-30 14:30:00",
-      "program": "Executive Coaching Call",
       "title": "Executive Coaching Call: Gary Tober"
     }
   ]
@@ -164,8 +159,8 @@ Same sheet; includes rows even if `email_draft_saved` is set. (`type=non_trainin
 
 ## Sheet columns
 
-**events:** `event_id`, `title`, `program`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `updated`, `email`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`
+**events:** `event_id`, `title`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `updated`, `email (yes or no)`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`
 
-`email` is copied from `rules` on import (`yesEmail` / `noEmail`). Drafts only run when `email` is `yesEmail`; body greeting uses `rules.firstName`.
+`email (yes or no)` is copied from `rules` on import (`yesEmail` / `noEmail`). Drafts only run when the value is `yesEmail`; body greeting uses `rules.firstName`.
 
 `zoom_meeting_id` is parsed from the Zoom URL in `location` (e.g. `https://us02web.zoom.us/j/87824741880` → `87824741880`).

@@ -38,13 +38,13 @@ function createEmailDraftsForRows_(sheet, rows) {
   var details = [];
 
   rows.forEach(function (row) {
+    var emailFlag = getEmailFlag_(row.data);
     var detailBase = {
       event_id: String(row.data.event_id || ''),
       title: String(row.data.title || ''),
-      program: String(row.data.program || ''),
       zoom_meeting_id: String(row.data.zoom_meeting_id || ''),
       start: String(row.data.start || ''),
-      email: String(row.data.email || ''),
+      emailFlag: emailFlag,
       sheetRow: row.sheetRow
     };
 
@@ -59,16 +59,16 @@ function createEmailDraftsForRows_(sheet, rows) {
       return;
     }
 
-    if (!isYesEmailFlag_(row.data.email)) {
+    if (!isYesEmailFlag_(emailFlag)) {
       skipped++;
       messages.push(logDraftSkip_(
         row,
         'email_flag_not_yes',
-        'email=' + formatLogValue_(row.data.email)
+        'emailFlag=' + formatLogValue_(emailFlag)
       ));
       details.push(Object.assign({}, detailBase, {
         status: 'skipped',
-        reason: 'noEmail flag (email=' + String(row.data.email || '') + ')',
+        reason: 'noEmail flag (email (yes or no)=' + emailFlag + ')',
         draftSaved: false
       }));
       return;
@@ -211,7 +211,7 @@ function logDraftWarn_(row, reason, details) {
 }
 
 function formatDraftLog_(row, reason, details) {
-  var label = row.data.program || row.data.event_id || 'unknown';
+  var label = row.data.title || row.data.event_id || 'unknown';
   var message = 'Row ' + row.sheetRow + ' | event: ' + label + ' | reason: ' + reason;
   if (details) {
     message += ' | ' + details;
@@ -335,13 +335,18 @@ function getRulesFirstName_(rowData, rulesMap) {
   return 'there';
 }
 
+function getSessionName_(rowData) {
+  return String(rowData.title || '').trim() || 'coaching';
+}
+
+function getEmailFlag_(rowData) {
+  var column = getConfig_().emailFlagColumn || 'email (yes or no)';
+  return String((rowData && rowData[column]) || '').trim();
+}
+
 function isYesEmailFlag_(value) {
   var expected = String(getConfig_().rulesYesEmail || 'yesEmail').trim().toLowerCase();
   return String(value || '').trim().toLowerCase() === expected;
-}
-
-function getSessionName_(rowData) {
-  return String(rowData.program || '').trim() || 'coaching';
 }
 
 function getMeetingDayPhrase_(startDate, timezone) {

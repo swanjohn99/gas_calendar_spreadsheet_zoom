@@ -115,7 +115,6 @@ function buildRulesReplacementVars_(rowData, rule, meetingStart, timezone) {
     firstName: firstName,
     lastName: lastName,
     title: String(rowData.title || (rule && rule.title) || '').trim(),
-    program: String(rowData.program || '').trim(),
     current_year: timeVars.current_year,
     current_quarter: timeVars.current_quarter,
     currentDate: timeVars.currentDate,
