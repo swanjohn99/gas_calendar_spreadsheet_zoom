@@ -23,6 +23,9 @@ function createEmailDraftsForPending_() {
     if (row.data.email_draft_saved) {
       return false;
     }
+    if (!isYesEmailFlag_(row.data.email)) {
+      return false;
+    }
     if (!isMeetingStartOnOrBeforeToday_(row.data.start, config.timezone)) {
       return false;
     }
@@ -39,6 +42,7 @@ function createEmailDraftsForRows_(sheet, rows) {
   var config = getConfig_();
   var headerMap = getHeaderIndexMap_(sheet);
   var emailDraftSavedIndex = headerMap.email_draft_saved;
+  var rulesMap = buildRulesMap_();
   var created = 0;
   var skipped = 0;
   var errors = 0;
@@ -48,6 +52,16 @@ function createEmailDraftsForRows_(sheet, rows) {
     if (row.data.email_draft_saved) {
       skipped++;
       messages.push(logDraftSkip_(row, 'already_drafted', 'email_draft_saved=' + row.data.email_draft_saved));
+      return;
+    }
+
+    if (!isYesEmailFlag_(row.data.email)) {
+      skipped++;
+      messages.push(logDraftSkip_(
+        row,
+        'email_flag_not_yes',
+        'email=' + formatLogValue_(row.data.email)
+      ));
       return;
     }
 
@@ -78,8 +92,9 @@ function createEmailDraftsForRows_(sheet, rows) {
 
     try {
       var subject = buildCoachingEmailSubject_(row.data, config);
-      var plainBody = buildCoachingEmailPlainBody_(row.data, config);
-      var htmlBody = buildCoachingEmailHtmlBody_(row.data, config);
+      var firstName = getRulesFirstName_(row.data, rulesMap);
+      var plainBody = buildCoachingEmailPlainBody_(row.data, config, firstName);
+      var htmlBody = buildCoachingEmailHtmlBody_(row.data, config, firstName);
       var options = {
         htmlBody: htmlBody,
         attachments: buildCoachingEmailAttachments_(row.data)
@@ -268,12 +283,18 @@ function getDriveBlobFromUrl_(url) {
 }
 
 function getAttendeeFirstName_(rowData) {
-  var firstName = String(rowData.attendee_first_name || '').trim();
+  var rule = lookupRuleByTitle_(buildRulesMap_(), rowData.title);
+  var firstName = rule ? String(rule.firstName || '').trim() : '';
   if (firstName) {
     return firstName;
   }
 
   return 'there';
+}
+
+function isYesEmailFlag_(value) {
+  var expected = String(getConfig_().rulesYesEmail || 'yesEmail').trim().toLowerCase();
+  return String(value || '').trim().toLowerCase() === expected;
 }
 
 function getSessionName_(rowData) {

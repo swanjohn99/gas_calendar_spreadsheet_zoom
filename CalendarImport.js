@@ -57,6 +57,7 @@ function syncCalendarEvents_() {
   var trainingRejected = {};
   var nonTrainingRejected = {};
   var calendarColorCache = {};
+  var rulesMap = buildRulesMap_();
 
   events.forEach(function (event) {
     var eventId = event.getId();
@@ -68,7 +69,7 @@ function syncCalendarEvents_() {
       return;
     }
 
-    var mapped = mapCalendarEventToRow_(event);
+    var mapped = mapCalendarEventToRow_(event, rulesMap);
 
     if (isGreenEventColor_(event, calendarColorCache)) {
       upsertEventRow_(
@@ -188,22 +189,22 @@ function removeRejectedEventRows_(sheet, rows, rejectedIds) {
   });
 }
 
-function mapCalendarEventToRow_(event) {
+function mapCalendarEventToRow_(event, rulesMap) {
   var title = event.getTitle() || '';
-  var parsedTitle = parseEventTitle_(title);
+  var program = parseEventProgram_(title);
+  var rule = lookupRuleByTitle_(rulesMap || {}, title);
 
   return {
     event_id: event.getId(),
     title: title,
-    program: parsedTitle.program,
-    attendee_first_name: parsedTitle.attendee_first_name,
-    attendee_last_name: parsedTitle.attendee_last_name,
+    program: program,
     location: event.getLocation() || '',
     zoom_meeting_id: extractZoomMeetingId_(event.getLocation()),
     start: formatDateValue_(event.getStartTime()),
     end: formatDateValue_(event.getEndTime()),
     attendee_email: getAttendeeEmail_(event),
     updated: formatDateValue_(event.getLastUpdated()),
+    email: rule ? String(rule.email || '').trim() : '',
     email_draft_saved: '',
     video_url: '',
     pdf_url: '',
@@ -213,14 +214,10 @@ function mapCalendarEventToRow_(event) {
   };
 }
 
-function parseEventTitle_(rawTitle) {
+function parseEventProgram_(rawTitle) {
   var title = String(rawTitle || '').trim();
   if (!title) {
-    return {
-      program: '',
-      attendee_first_name: '',
-      attendee_last_name: ''
-    };
+    return '';
   }
 
   var separatorIndex = -1;
@@ -232,22 +229,10 @@ function parseEventTitle_(rawTitle) {
   }
 
   if (separatorIndex === -1) {
-    return {
-      program: title,
-      attendee_first_name: '',
-      attendee_last_name: ''
-    };
+    return title;
   }
 
-  var program = title.substring(0, separatorIndex).trim();
-  var namePart = title.substring(separatorIndex + 1).trim();
-  var nameTokens = namePart.split(/\s+/).filter(Boolean);
-
-  return {
-    program: program,
-    attendee_first_name: nameTokens[0] || '',
-    attendee_last_name: nameTokens.slice(1).join(' ')
-  };
+  return title.substring(0, separatorIndex).trim();
 }
 
 function toCalendarApiEventId_(eventId) {

@@ -109,12 +109,8 @@ function buildRulesReplacementVars_(rowData, rule, meetingStart, timezone) {
   if (!timeVars) {
     return null;
   }
-  var firstName = String(
-    rowData.attendee_first_name || (rule && rule.firstName) || ''
-  ).trim();
-  var lastName = String(
-    rowData.attendee_last_name || (rule && rule.lastName) || ''
-  ).trim();
+  var firstName = String((rule && rule.firstName) || '').trim();
+  var lastName = String((rule && rule.lastName) || '').trim();
   var vars = {
     firstName: firstName,
     lastName: lastName,
