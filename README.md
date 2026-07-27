@@ -2,11 +2,11 @@
 
 Bound spreadsheet script that:
 
-- imports Google Calendar events into `Coaching events` (green + Zoom) and `Non-Coaching events` (non-green + Zoom)
-- archives coaching events older than 30 days to a `zoom_archive` tab in another spreadsheet (see Script Properties)
-- creates Gmail drafts for coaching follow-up emails from selected `Coaching events` rows
-- exposes a `doGet` web app API for pending coaching and non-coaching meetings (Chrome extension)
-- organizes Drive inbox files into meeting folders and writes artifact URLs (`DriveInboxOrganizer.gs`)
+- imports Google Calendar Zoom events into a single `events` sheet (no color split)
+- archives events older than 30 days to a `zoom_archive` tab in another spreadsheet (see Script Properties)
+- creates Gmail drafts for follow-up emails from selected `events` rows (`rules.email=yesEmail`)
+- exposes a `doGet` web app API for pending meetings (Chrome extension)
+- organizes Drive inbox files into meeting folders and writes artifact URLs (`DriveInboxOrganizer.js`)
 
 ## Setup
 
@@ -51,28 +51,23 @@ If the workflow fails with `401`, re-run `clasp login` locally and update `CLASP
 
 ## Menu actions
 
-- **Import Calendar** — sync events to both sheets, then archive old coaching rows
+- **Import Calendar** — sync Zoom events into `events`, then archive old rows
 - **Schedule** — installs sync triggers at `9:00, 12:00, 15:00, 17:00` `America/Chicago`. Each run saves a report; the **last** run (no later hours left today) emails the combined summary (new + deleted events only — not row updates)
 - **Organize Drive Inbox** — match inbox files by meeting ID + date, apply `rules`, copy/rename, write URL columns
-- **Create Email Drafts** — drafts for selected `Coaching events` rows with `email=yesEmail`; greeting uses `rules.firstName`
+- **Create Email Drafts** — drafts for selected `events` rows with `email=yesEmail`; greeting uses `rules.firstName`
 - **Organize Inbox + Email Drafts** — runs organizer then pending drafts in one step (no day-summary email)
 
-## Import routing
+## Import
 
-| Sheet | Criteria |
-|-------|----------|
-| `Coaching events` | Green + Zoom link in `location`. Event colors: Sage `2`, Basil `10`. If no event color override, calendar colors: Eucalyptus `7`, Basil `8`, Pistachio `9`, Avocado `10`, Sage `13` |
-| `Non-Coaching events` | Not green + Zoom link in `location` |
+All calendar events with a Zoom link in `location` go into the `events` sheet (color is ignored). Events without a Zoom link are removed if they appear in the sync window.
 
-Events without a Zoom link are removed from both sheets.
-
-On first access after upgrade, legacy tab names (`Events`, `TrainingEvents`, `Non-Training Events`) are renamed automatically.
+On first access after upgrade, legacy tabs (`Coaching events`, `Non-Coaching events`, `Events`, `TrainingEvents`, `Non-Training Events`) are renamed/merged into `events`.
 
 Re-run **Import Calendar** after header changes to repopulate columns.
 
-## Workflow (coaching)
+## Workflow
 
-1. Chrome extension calls **GET** coaching API for pending meetings
+1. Chrome extension calls **GET** API for pending meetings
 2. Python uploads files to the Drive **inbox** as `{zoom_meeting_id}-{MM.DD.YY}.{ext}`
 3. Run **Organize Drive Inbox** (or **Organize Inbox + Email Drafts**) — matches by meeting ID + date, applies `rules` templates, copies/renames, fills URL columns
 4. Email drafts are created on schedule, via the combined menu, or **Create Email Drafts** for selected rows when `email=yesEmail` and required URLs are present
@@ -104,7 +99,7 @@ Date stamp format: `MM.DD.YY` from meeting `start` (e.g. `03.20.26`).
 
 Flow:
 
-1. Parse inbox name → meeting ID + date → find row on `Coaching events` or `Non-Coaching events`
+1. Parse inbox name → meeting ID + date → find row on `events`
 2. Look up `rules` by row `title` (alphanumeric-insensitive)
 3. Expand `folderPath` + artifact filename templates with `${firstName}` / `${lastName}` from **rules**, and meeting-start placeholders (`${current_year}`, `${current_quarter}`, `${currentDate}`, `${current_day}`)
 4. Copy into `{CLIENT_MEETINGS_ROOT}/{folderPath segments}/` under the template filename; write URL columns
@@ -136,13 +131,13 @@ Deploy as web app: **Deploy > New deployment > Web app**
 - Execute as: Me
 - Access: your choice (document in deployment)
 
-### GET pending coaching meetings
+### GET pending meetings
 
 ```text
 GET https://script.google.com/macros/s/DEPLOYMENT_ID/exec?key=YOUR_API_KEY&limit=100
 ```
 
-Returns `Coaching events` rows where `email_draft_saved` is empty and meeting `start` date is today or earlier (`America/Chicago`):
+Returns `events` rows where `email_draft_saved` is empty and meeting `start` date is today or earlier (`America/Chicago`):
 
 ```json
 {
@@ -159,19 +154,17 @@ Returns `Coaching events` rows where `email_draft_saved` is empty and meeting `s
 }
 ```
 
-### GET pending non-coaching meetings
+### GET all due meetings (no draft filter)
 
 ```text
-GET https://script.google.com/macros/s/DEPLOYMENT_ID/exec?key=YOUR_API_KEY&type=non_training&limit=100
+GET https://script.google.com/macros/s/DEPLOYMENT_ID/exec?key=YOUR_API_KEY&type=all&limit=100
 ```
 
-Returns `Non-Coaching events` rows where meeting `start` date is today or earlier (no `email_draft_saved` filter). Response shape is the same as coaching.
+Same sheet; includes rows even if `email_draft_saved` is set. (`type=non_training` is accepted as an alias.)
 
 ## Sheet columns
 
-**Coaching events:** `event_id`, `title`, `program`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `updated`, `email`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`
-
-**Non-Coaching events:** same as coaching except no `email_draft_saved` column.
+**events:** `event_id`, `title`, `program`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `updated`, `email`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`
 
 `email` is copied from `rules` on import (`yesEmail` / `noEmail`). Drafts only run when `email` is `yesEmail`; body greeting uses `rules.firstName`.
 

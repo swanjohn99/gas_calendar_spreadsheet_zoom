@@ -235,12 +235,6 @@ function classifyArtifactByExtension_(ext, suffix) {
 function buildMeetingRowIndex_(timezone) {
   var index = {};
   addSheetRowsToMeetingIndex_(index, getEventsSheet_(), null, timezone);
-  addSheetRowsToMeetingIndex_(
-    index,
-    getNonTrainingEventsSheet_(),
-    getConfig_().nonTrainingHeaders,
-    timezone
-  );
   return index;
 }
 
