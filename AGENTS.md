@@ -10,7 +10,7 @@ and no local dev server.
 ### Services / how it "runs"
 
 - The only local tool is `@google/clasp` (installed globally by the update script).
-- Deploying = git push (hook on agent `stop`; see `.cursor/rules/deploy-after-changes.mdc`). CI then runs `clasp push`.
+- Deploying = stop hook git commit/push (agent must not). CI then runs `clasp push`.
 - `clasp push` / `clasp status` require BOTH (git-ignored, provided as secrets):
   - `.clasp.json` — project `scriptId` (repo secret `CLASP_JSON`)
   - `~/.clasprc.json` — OAuth creds from `clasp login` (repo secret `CLASPRC_JSON`)
