@@ -21,7 +21,7 @@ fi
 
 git add -A -- . 2>/dev/null || true
 
-# Drop staged secrets / credential-like paths (align with deploy-after-changes.mdc)
+# Drop staged secrets / credential-like paths
 is_blocked_() {
   local f="$1"
   local base
