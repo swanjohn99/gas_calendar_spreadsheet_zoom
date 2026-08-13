@@ -87,15 +87,17 @@ Full calendar title is stored in `title`. Attendee first/last name come from the
 
 Inbox files are matched to a sheet row by **Zoom meeting ID + start date**, then renamed/filed using the `rules` sheet.
 
+**Zoom API sync** (audio, transcript, chat, summary) uses the same row matching and `rules` templates but skips MP4 — video still comes from the Drive inbox.
+
 Date stamp format: `MM.DD.YY` from meeting `start` (e.g. `03.20.26`).
 
-| Artifact | Inbox filename |
-|----------|----------------|
-| video | `{zoom_meeting_id}-{MM.DD.YY}.mp4` |
-| audio | `{zoom_meeting_id}-{MM.DD.YY}.m4a` |
-| pdf | `{zoom_meeting_id}-{MM.DD.YY}.pdf` |
-| transcript | `{zoom_meeting_id}-{MM.DD.YY}.txt` |
-| chat | `{zoom_meeting_id}-{MM.DD.YY}-chat.txt` |
+| Artifact | Source | Filename pattern |
+|----------|--------|------------------|
+| video | Drive inbox (Python) | `{zoom_meeting_id}-{MM.DD.YY}.mp4` |
+| audio | Zoom API or inbox | `{zoom_meeting_id}-{MM.DD.YY}.m4a` |
+| pdf | Zoom API or inbox | `{zoom_meeting_id}-{MM.DD.YY}.pdf` |
+| transcript | Zoom API or inbox | `{zoom_meeting_id}-{MM.DD.YY}.txt` |
+| chat | Zoom API or inbox | `{zoom_meeting_id}-{MM.DD.YY}-chat.txt` |
 
 Flow:
 
