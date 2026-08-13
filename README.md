@@ -16,8 +16,10 @@ Bound spreadsheet script that:
 4. Set Script Properties (**Project Settings > Script Properties**). Key names are defined in `CONFIG.SCRIPT_PROPERTY_KEYS` in [`Config.js`](Config.js):
    - `ZOOM_ARCHIVE_SPREADSHEET_ID` — spreadsheet ID for the archive **workbook**
    - `API_KEY` — secret for `doGet`
-   - `DRIVE_INBOX_FOLDER_ID` — Drive folder where Python drops synced files
+   - `DRIVE_INBOX_FOLDER_ID` — Drive folder where Python drops synced MP4 files
    - `CLIENT_MEETINGS_ROOT_FOLDER_ID` — root folder for `rules` `folderPath` segments
+   - `ZOOM_ACCOUNT_ID`, `ZOOM_CLIENT_ID`, `ZOOM_CLIENT_SECRET` — Zoom Server-to-Server OAuth app credentials
+   - `ZOOM_USER_ID` — Zoom host user (email or user ID) whose cloud recordings to sync
    - optional `CALENDAR_ID` — defaults to `primary`
 
    Archive uses `ZOOM_ARCHIVE_SPREADSHEET_ID` (which file) plus tab name `zoom_archive` from `Config.js` (which sheet inside that file).
