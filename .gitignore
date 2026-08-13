@@ -2,3 +2,5 @@
 .clasp.json
 .clasprc.json
 node_modules/
+.cursor/debug-*.log
+

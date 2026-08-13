@@ -1,7 +1,7 @@
 {
   "version": 1,
   "hooks": {
-    "afterFileEdit": [
+    "stop": [
       {
         "command": ".cursor/hooks/commit-and-push.sh",
         "timeout": 120
