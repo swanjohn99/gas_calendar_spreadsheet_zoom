@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Commit and push after agent file edits. Fail open on errors.
+# Fallback commit+push after the agent turn ends (stop). Fail open.
+# If the agent already committed, this no-ops.
 set -u
 
 # Drain stdin (hook JSON payload).
@@ -11,33 +12,45 @@ if [[ -z "${ROOT}" ]]; then
 fi
 cd "${ROOT}" || exit 0
 
+exec 9>"${ROOT}/.git/auto-commit.lock"
+flock -n 9 || exit 0
+
 if git diff --quiet && git diff --cached --quiet && [[ -z "$(git ls-files --others --exclude-standard)" ]]; then
   exit 0
 fi
 
 git add -A -- . 2>/dev/null || true
 
-# Drop staged secrets / credential-like paths
-while IFS= read -r f; do
-  [[ -z "$f" ]] && continue
+# Drop staged secrets / credential-like paths (align with deploy-after-changes.mdc)
+is_blocked_() {
+  local f="$1"
+  local base
   base="$(basename "$f")"
   case "$base" in
-    .env|.env.*|credentials.json|*.pem|*.key)
-      git reset -q -- "$f" 2>/dev/null || true
+    .env|.env.*|.clasp.json|.clasprc.json|credentials.json|*.pem|*.key|debug-*.log)
+      return 0
       ;;
   esac
   case "$f" in
-    *.env|*/.env|*/.env.*|*credentials*|*secret*)
-      git reset -q -- "$f" 2>/dev/null || true
+    *.env|*/.env|*/.env.*|*credentials*|*secret*|.clasp.json|*/.clasp.json|.clasprc.json|*/.clasprc.json|.cursor/debug-*.log)
+      return 0
       ;;
   esac
+  return 1
+}
+
+while IFS= read -r f; do
+  [[ -z "$f" ]] && continue
+  if is_blocked_ "$f"; then
+    git reset -q -- "$f" 2>/dev/null || true
+  fi
 done < <(git diff --cached --name-only 2>/dev/null)
 
 if git diff --cached --quiet; then
   exit 0
 fi
 
-# Resolve author: env → local git config → last commit → hard fallback.
+# Resolve author: env -> local git config -> last commit -> hard fallback.
 _name="${GIT_AUTHOR_NAME:-}"
 _email="${GIT_AUTHOR_EMAIL:-}"
 [[ -z "$_name" ]] && _name="$(git config --local user.name 2>/dev/null || true)"
