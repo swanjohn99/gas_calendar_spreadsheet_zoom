@@ -39,12 +39,13 @@ is_blocked_() {
   return 1
 }
 
+# Unstage adds/modifies of blocked paths; keep deletions (removing secrets from git).
 while IFS= read -r f; do
   [[ -z "$f" ]] && continue
   if is_blocked_ "$f"; then
     git reset -q -- "$f" 2>/dev/null || true
   fi
-done < <(git diff --cached --name-only 2>/dev/null)
+done < <(git diff --cached --diff-filter=ACMR --name-only 2>/dev/null)
 
 if git diff --cached --quiet; then
   exit 0
