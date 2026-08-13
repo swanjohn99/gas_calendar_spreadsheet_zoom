@@ -233,7 +233,7 @@ function formatDailySummaryEmailBody_(report, config) {
       lines.push(
         (index + 1) + '. ' + (file.title || file.zoom_meeting_id || '(meeting)') +
           ' | ' + file.artifact +
-          ' | inbox ' + (file.inboxName || '') +
+          ' | ' + (file.source || 'inbox') + ' ' + (file.inboxName || '') +
           ' → ' + file.finalPath +
           (file.status ? ' (' + file.status + ')' : '')
       );
