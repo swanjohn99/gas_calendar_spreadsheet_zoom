@@ -101,7 +101,7 @@ Date stamp format: `MM.DD.YY` from meeting `start` (e.g. `03.20.26`).
 
 Flow:
 
-1. Parse inbox name → meeting ID + date → find row on `events`
+1. Parse inbox name → meeting ID + date → find row on `events` (Zoom sync matches by meeting ID + start date instead)
 2. Look up `rules` by row `title` (alphanumeric-insensitive)
 3. Expand `folderPath` + artifact filename templates with `${firstName}` / `${lastName}` from **rules**, and meeting-start placeholders (`${current_year}`, `${current_quarter}`, `${currentDate}`, `${current_day}`)
 4. Copy into `{CLIENT_MEETINGS_ROOT}/{folderPath segments}/` under the template filename; write URL columns
