@@ -1,0 +1,54 @@
+name: Setup Zoom Script Properties
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-zoom-properties:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install clasp
+        run: npm ci
+
+      - name: Write clasp credentials
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          CLASP_JSON: ${{ secrets.CLASP_JSON }}
+        run: |
+          if [ -z "$CLASPRC_JSON" ] || [ -z "$CLASP_JSON" ]; then
+            echo "Missing CLASPRC_JSON or CLASP_JSON repository secret."
+            exit 1
+          fi
+          printf '%s\n' "$CLASPRC_JSON" > ~/.clasprc.json
+          printf '%s\n' "$CLASP_JSON" > .clasp.json
+
+      - name: Push latest script
+        run: npx clasp push --force
+
+      - name: Set Zoom Script Properties in Apps Script
+        env:
+          ZOOM_ACCOUNT_ID: ${{ secrets.ZOOM_ACCOUNT_ID }}
+          ZOOM_CLIENT_ID: ${{ secrets.ZOOM_CLIENT_ID }}
+          ZOOM_CLIENT_SECRET: ${{ secrets.ZOOM_CLIENT_SECRET }}
+          ZOOM_USER_ID: ${{ secrets.ZOOM_USER_ID }}
+        run: |
+          if [ -z "$ZOOM_ACCOUNT_ID" ] || [ -z "$ZOOM_CLIENT_ID" ] || [ -z "$ZOOM_CLIENT_SECRET" ]; then
+            echo "Missing ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, or ZOOM_CLIENT_SECRET repository secrets."
+            exit 1
+          fi
+          USER_ID="${ZOOM_USER_ID:-me}"
+          export ZOOM_ACCOUNT_ID ZOOM_CLIENT_ID ZOOM_CLIENT_SECRET USER_ID
+          PARAMS=$(node -e "console.log(JSON.stringify([process.env.ZOOM_ACCOUNT_ID, process.env.ZOOM_CLIENT_ID, process.env.ZOOM_CLIENT_SECRET, process.env.USER_ID]))")
+          npx clasp run setupZoomScriptProperties --params "$PARAMS"
+
+      - name: Verify Zoom Script Properties
+        run: npx clasp run verifyZoomScriptProperties
