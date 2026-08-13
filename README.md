@@ -112,7 +112,11 @@ On calendar import, `email (yes or no)` on the event row is copied from the matc
 
 Segment part files (e.g. `*_1.mp4`) are skipped.
 
-Re-running **Organize Drive Inbox** is idempotent: if the artifact URL is already on the row, copy is skipped. If the sheet URL is empty but the destination filename already exists, the existing file URL is written. Inbox originals stay in place.
+Re-running **Sync Zoom Recordings** or **Organize Drive Inbox** is idempotent: if the artifact URL is already on the row, copy is skipped. If the sheet URL is empty but the destination filename already exists, the existing file URL is written. Inbox originals stay in place.
+
+### Zoom API setup
+
+Create a Zoom **Server-to-Server OAuth** app with scopes `recording:read:admin` (or `recording:read`) and `user:read:admin` (or `user:read`). Set the four Zoom Script Properties above. Sync runs automatically during scheduled jobs and can be triggered manually from the menu.
 
 ## Artifact columns
 
