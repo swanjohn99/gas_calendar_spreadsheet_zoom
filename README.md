@@ -6,7 +6,7 @@ Bound spreadsheet script that:
 - archives events older than 30 days to a `zoom_archive` tab in another spreadsheet (see Script Properties)
 - creates Gmail drafts for follow-up emails from selected `events` rows (`rules.email=yesEmail`)
 - exposes a `doGet` web app API for pending meetings (Chrome extension)
-- organizes Drive inbox files into meeting folders and writes artifact URLs (`DriveInboxOrganizer.js`)
+- organizes Drive inbox files (MP4) and syncs small Zoom recording artifacts into meeting folders and writes artifact URLs
 
 ## Setup
 
