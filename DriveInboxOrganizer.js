@@ -25,14 +25,7 @@ function organizeDriveInbox() {
 function organizeDriveInbox_() {
   var config = getDriveInboxOrganizerConfig_();
   if (!config.inboxFolderId || !config.clientMeetingsRootId) {
-    return {
-      ok: false,
-      copied: 0,
-      skipped: 0,
-      deduped: 0,
-      items: [],
-      message: 'Set DRIVE_INBOX_FOLDER_ID and CLIENT_MEETINGS_ROOT_FOLDER_ID in Script Properties.'
-    };
+    return emptyArtifactResult_(false, 'Set DRIVE_INBOX_FOLDER_ID and CLIENT_MEETINGS_ROOT_FOLDER_ID in Script Properties.');
   }
 
   var timezone = getConfig_().timezone;
@@ -40,120 +33,186 @@ function organizeDriveInbox_() {
   var rowIndex = buildMeetingRowIndex_(timezone);
   var inbox = DriveApp.getFolderById(config.inboxFolderId);
   var files = inbox.getFiles();
-  var copied = 0;
-  var skipped = 0;
-  var deduped = 0;
-  var items = [];
+  var result = emptyArtifactResult_(true, '');
 
   while (files.hasNext()) {
     var file = files.next();
     var fileName = file.getName();
 
     if (isSegmentPartFile_(fileName)) {
-      skipped++;
+      result.skipped++;
       continue;
     }
 
     var parsed = parseInboxMeetingFilename_(fileName);
     if (!parsed) {
       Logger.log('Inbox filename not MeetingID-date: ' + fileName);
-      skipped++;
+      result.skipped++;
       continue;
     }
 
     var rowEntry = rowIndex[parsed.meetingId + '|' + parsed.dateStamp];
     if (!rowEntry) {
       Logger.log('No sheet row for ' + parsed.meetingId + ' on ' + parsed.dateStamp + ': ' + fileName);
-      skipped++;
+      result.skipped++;
       continue;
     }
 
-    var rowData = rowEntry.data;
-    var rule = lookupRuleByTitle_(rulesMap, rowData.title);
-    if (!rule) {
-      Logger.log('No rules row for title: ' + rowData.title);
-      skipped++;
-      continue;
-    }
+    var filed = fileArtifactForMeetingRow_(rowEntry, parsed.artifact, {
+      driveFile: file,
+      sourceName: fileName,
+      source: 'inbox'
+    }, {
+      clientMeetingsRootId: config.clientMeetingsRootId,
+      rulesMap: rulesMap,
+      timezone: timezone
+    });
+    mergeArtifactOutcome_(result, filed);
+  }
 
-    var vars = buildRulesReplacementVars_(rowData, rule, rowData.start, timezone);
-    if (!vars) {
-      Logger.log('Missing meeting start for row: ' + rowData.title);
-      skipped++;
-      continue;
-    }
+  result.message = formatDriveInboxSummary_(result);
+  return result;
+}
 
-    var artifact = parsed.artifact;
-    var urlColumn = getArtifactUrlColumn_(artifact);
-    if (urlColumn && String(rowData[urlColumn] || '').trim()) {
-      Logger.log('Deduped ' + fileName + ': sheet URL already set');
-      deduped++;
-      continue;
-    }
+/**
+ * File one artifact for a meeting row (shared by inbox organizer and Zoom sync).
+ */
+function fileArtifactForMeetingRow_(rowEntry, artifact, content, context) {
+  var rowData = rowEntry.data;
+  var rule = lookupRuleByTitle_(context.rulesMap, rowData.title);
+  if (!rule) {
+    Logger.log('No rules row for title: ' + rowData.title);
+    return { status: 'skipped', reason: 'no_rule' };
+  }
 
-    var targetFileName = getRuleArtifactFileName_(rule, artifact, vars);
-    if (!targetFileName) {
-      Logger.log('Empty rules filename for ' + artifact + ': ' + rowData.title);
-      skipped++;
-      continue;
-    }
+  var vars = buildRulesReplacementVars_(rowData, rule, rowData.start, context.timezone);
+  if (!vars) {
+    Logger.log('Missing meeting start for row: ' + rowData.title);
+    return { status: 'skipped', reason: 'missing_start' };
+  }
 
-    var segments = getRuleFolderPathSegments_(rule, vars);
-    if (!segments.length) {
-      Logger.log('Empty rules folderPath for title: ' + rowData.title);
-      skipped++;
-      continue;
-    }
+  var urlColumn = getArtifactUrlColumn_(artifact);
+  if (urlColumn && String(rowData[urlColumn] || '').trim()) {
+    Logger.log('Deduped ' + (content.sourceName || artifact) + ': sheet URL already set');
+    return { status: 'deduped', reason: 'sheet_url_set' };
+  }
 
-    var finalPath = segments.join('/') + '/' + targetFileName;
-    var targetFolder = ensureFolderPathFromRoot_(config.clientMeetingsRootId, segments);
-    var existingFile = findFileInFolderByName_(targetFolder, targetFileName);
-    if (existingFile) {
-      Logger.log('Deduped ' + fileName + ': already in destination as ' + targetFileName);
-      writeArtifactUrl_(
-        rowEntry.sheet,
-        rowEntry.headerMap,
-        rowEntry.sheetRow,
-        artifact,
-        existingFile.getUrl()
-      );
-      rowData[urlColumn] = existingFile.getUrl();
-      deduped++;
-      items.push(buildOrganizeItem_(rowData, parsed, fileName, finalPath, 'deduped', existingFile.getUrl()));
-      continue;
-    }
+  var targetFileName = getRuleArtifactFileName_(rule, artifact, vars);
+  if (!targetFileName) {
+    Logger.log('Empty rules filename for ' + artifact + ': ' + rowData.title);
+    return { status: 'skipped', reason: 'empty_filename' };
+  }
 
-    var copiedFile = file.makeCopy(targetFileName, targetFolder);
+  var segments = getRuleFolderPathSegments_(rule, vars);
+  if (!segments.length) {
+    Logger.log('Empty rules folderPath for title: ' + rowData.title);
+    return { status: 'skipped', reason: 'empty_folder_path' };
+  }
+
+  var finalPath = segments.join('/') + '/' + targetFileName;
+  var targetFolder = ensureFolderPathFromRoot_(context.clientMeetingsRootId, segments);
+  var existingFile = findFileInFolderByName_(targetFolder, targetFileName);
+  if (existingFile) {
+    Logger.log('Deduped ' + (content.sourceName || artifact) + ': already in destination as ' + targetFileName);
     writeArtifactUrl_(
       rowEntry.sheet,
       rowEntry.headerMap,
       rowEntry.sheetRow,
       artifact,
-      copiedFile.getUrl()
+      existingFile.getUrl()
     );
-    rowData[urlColumn] = copiedFile.getUrl();
-    copied++;
-    items.push(buildOrganizeItem_(rowData, parsed, fileName, finalPath, 'copied', copiedFile.getUrl()));
+    rowData[urlColumn] = existingFile.getUrl();
+    return {
+      status: 'deduped',
+      item: buildOrganizeItem_(rowData, artifact, content.sourceName || '', finalPath, 'deduped',
+        existingFile.getUrl(), content.source || 'inbox')
+    };
   }
 
+  var savedFile;
+  if (content.driveFile) {
+    savedFile = content.driveFile.makeCopy(targetFileName, targetFolder);
+  } else if (content.blob) {
+    savedFile = targetFolder.createFile(content.blob).setName(targetFileName);
+  } else {
+    Logger.log('No file content for artifact ' + artifact);
+    return { status: 'skipped', reason: 'missing_content' };
+  }
+
+  writeArtifactUrl_(
+    rowEntry.sheet,
+    rowEntry.headerMap,
+    rowEntry.sheetRow,
+    artifact,
+    savedFile.getUrl()
+  );
+  rowData[urlColumn] = savedFile.getUrl();
   return {
-    ok: true,
-    copied: copied,
-    skipped: skipped,
-    deduped: deduped,
-    items: items,
-    message: formatDriveInboxSummary_({ copied: copied, skipped: skipped, deduped: deduped })
+    status: 'copied',
+    item: buildOrganizeItem_(rowData, artifact, content.sourceName || targetFileName, finalPath,
+      'copied', savedFile.getUrl(), content.source || 'inbox')
   };
 }
 
-function buildOrganizeItem_(rowData, parsed, inboxName, finalPath, status, url) {
+function emptyArtifactResult_(ok, message) {
+  return {
+    ok: ok,
+    copied: 0,
+    skipped: 0,
+    deduped: 0,
+    items: [],
+    message: message || ''
+  };
+}
+
+function mergeArtifactOutcome_(result, outcome) {
+  if (!outcome) {
+    return;
+  }
+  if (outcome.status === 'copied') {
+    result.copied++;
+    if (outcome.item) {
+      result.items.push(outcome.item);
+    }
+    return;
+  }
+  if (outcome.status === 'deduped') {
+    result.deduped++;
+    if (outcome.item) {
+      result.items.push(outcome.item);
+    }
+    return;
+  }
+  result.skipped++;
+}
+
+function mergeArtifactResults_(left, right) {
+  left = left || emptyArtifactResult_(false, '');
+  right = right || emptyArtifactResult_(false, '');
+  return {
+    ok: !!(left.ok || right.ok),
+    copied: (left.copied || 0) + (right.copied || 0),
+    skipped: (left.skipped || 0) + (right.skipped || 0),
+    deduped: (left.deduped || 0) + (right.deduped || 0),
+    items: (left.items || []).concat(right.items || []),
+    message: [left.message, right.message].filter(function (part) {
+      return !!String(part || '').trim();
+    }).join(' ')
+  };
+}
+
+function buildOrganizeItem_(rowData, artifact, sourceName, finalPath, status, url, source) {
+  var meetingId = String(rowData.zoom_meeting_id || '').replace(/\D/g, '');
+  var timezone = getConfig_().timezone;
+  var meetingDateIso = formatSheetDateOnly_(rowData.start, timezone);
   return {
     event_id: String(rowData.event_id || ''),
     title: String(rowData.title || ''),
-    zoom_meeting_id: parsed.meetingId,
-    dateStamp: parsed.dateStamp,
-    artifact: parsed.artifact,
-    inboxName: inboxName,
+    zoom_meeting_id: meetingId,
+    dateStamp: meetingDateIso ? formatMmDdYy_(meetingDateIso) : '',
+    artifact: artifact,
+    source: source || 'inbox',
+    inboxName: sourceName,
     finalPath: finalPath,
     status: status,
     url: url || ''
@@ -162,6 +221,11 @@ function buildOrganizeItem_(rowData, parsed, inboxName, finalPath, status, url) 
 
 function formatDriveInboxSummary_(result) {
   return 'Drive inbox: copied ' + result.copied + ', skipped ' + result.skipped +
+    ', deduped ' + (result.deduped || 0) + '.';
+}
+
+function formatCombinedArtifactSummary_(result) {
+  return 'Artifacts: copied ' + result.copied + ', skipped ' + result.skipped +
     ', deduped ' + (result.deduped || 0) + '.';
 }
 
