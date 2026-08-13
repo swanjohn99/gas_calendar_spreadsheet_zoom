@@ -4,6 +4,7 @@ function onOpen() {
     .addItem('Import Calendar', 'importCalendar')
     .addItem('Schedule', 'scheduleCalendarSync')
     .addSeparator()
+    .addItem('Sync Zoom Recordings', 'syncZoomRecordings')
     .addItem('Organize Drive Inbox', 'organizeDriveInbox')
     .addItem('Create Email Drafts', 'createEmailDraftsForSelection')
     .addItem('Organize Inbox + Email Drafts', 'organizeInboxAndCreateDrafts')

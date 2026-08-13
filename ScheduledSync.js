@@ -45,28 +45,36 @@ function runScheduledSync() {
 }
 
 /**
- * Organize inbox then create pending drafts.
+ * Sync Zoom recordings, organize inbox, then create pending drafts.
  */
 function runOrganizeAndDraftsPipeline_(options) {
   options = options || {};
+  var zoom = syncZoomRecordings_();
   var drive = organizeDriveInbox_();
+  var artifacts = mergeArtifactResults_(zoom, drive);
   var drafts = createEmailDraftsForPending_();
 
   var message = '';
-  if (drive.ok) {
-    message += drive.message;
+  if (zoom.ok) {
+    message += zoom.message + ' ';
   } else {
-    message += 'Drive inbox skipped: ' + drive.message;
+    message += 'Zoom sync skipped: ' + zoom.message + ' ';
   }
-  message += ' Drafts: ' + drafts.created + ' created, ' + drafts.skipped +
+  if (drive.ok) {
+    message += drive.message + ' ';
+  } else {
+    message += 'Drive inbox skipped: ' + drive.message + ' ';
+  }
+  message += 'Drafts: ' + drafts.created + ' created, ' + drafts.skipped +
     ' skipped, ' + drafts.errors + ' errors.';
 
   return {
-    ok: !!drive.ok,
+    ok: !!artifacts.ok,
     source: options.source || 'pipeline',
-    drive: drive,
+    drive: artifacts,
+    zoom: zoom,
     drafts: drafts,
-    message: message
+    message: message.trim()
   };
 }
 
