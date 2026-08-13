@@ -13,7 +13,7 @@ fi
 cd "${ROOT}" || exit 0
 
 exec 9>"${ROOT}/.git/auto-commit.lock"
-flock -n 9 || exit 0
+flock -w 120 9 || exit 0
 
 if git diff --quiet && git diff --cached --quiet && [[ -z "$(git ls-files --others --exclude-standard)" ]]; then
   exit 0
@@ -72,5 +72,33 @@ if ! git commit -m "auto: sync agent file changes" >/dev/null 2>&1; then
   exit 0
 fi
 
-git push -u origin HEAD >/dev/null 2>&1 || true
+# Concurrent hooks can win the GitHub CAS first; treat "already at HEAD" as success.
+in_sync_() {
+  local remote_head
+  remote_head="$(git rev-parse -q --verify origin/main 2>/dev/null || true)"
+  [[ -n "$remote_head" && "$remote_head" == "$(git rev-parse HEAD)" ]]
+}
+
+push_head_() {
+  local i
+  for i in 1 2 3; do
+    git fetch origin --prune >/dev/null 2>&1 || true
+    if in_sync_; then
+      return 0
+    fi
+    if git rev-parse -q --verify origin/main >/dev/null \
+        && ! git merge-base --is-ancestor origin/main HEAD 2>/dev/null; then
+      git pull --rebase origin main >/dev/null 2>&1 || true
+      if in_sync_; then
+        return 0
+      fi
+    fi
+    if git push -u origin HEAD >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+}
+
+push_head_
 exit 0
