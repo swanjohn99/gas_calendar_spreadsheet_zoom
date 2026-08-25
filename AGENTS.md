@@ -22,8 +22,9 @@ and no local dev server.
 
 The Google-integrated code (Calendar/Sheets/Gmail/Drive) cannot run locally. Pure
 logic functions CAN be exercised in Node with `vm` + stubbed globals (e.g.
-`parseEventTitle_`, `extractZoomMeetingId_`, `hasZoomLinkInLocation_` in
-`CalendarImport.js`). Syntax-check all files with `for f in *.js; do node --check "$f"; done`.
+`matchRuleByTitle_`, `resolveFirstName_`, `extractZoomMeetingId_`,
+`hasZoomLinkInLocation_`). Syntax-check all files with
+`for f in *.js; do node --check "$f"; done`.
 
 ### Runtime config (Script Properties, set in Apps Script UI — not local)
 
