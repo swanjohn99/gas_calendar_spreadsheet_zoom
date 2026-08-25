@@ -262,20 +262,25 @@ function isSegmentPartFile_(fileName) {
 }
 
 /**
- * `{meetingId}-{MM.DD.YY}.ext` or `{meetingId}-{MM.DD.YY}-chat.txt`
+ * `{meetingId}-{yyyy-MM-dd HH:mm:ss}_{uuid}.ext`
+ * or `{meetingId}-{yyyy-MM-dd HH:mm:ss}_{uuid}-chat.txt`
  */
 function parseInboxMeetingFilename_(fileName) {
   var match = String(fileName || '').match(
-    /^(\d+)\s*-\s*(\d{2}\.\d{2}\.\d{2})(?:\s*[-_]?\s*(chat|transcript))?\s*(\.[^.]+)$/i
+    /^(\d+)\s*-\s*(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2})_([^.]+?)(?:-(chat|transcript))?(\.[^.]+)$/i
   );
   if (!match) {
     return null;
   }
 
   var meetingId = match[1];
-  var dateStamp = match[2];
-  var suffix = String(match[3] || '').toLowerCase();
-  var ext = String(match[4] || '').toLowerCase();
+  var startStamp = String(match[2] || '').replace('T', ' ');
+  var uuid = String(match[3] || '').trim();
+  var suffix = String(match[4] || '').toLowerCase();
+  var ext = String(match[5] || '').toLowerCase();
+  if (!uuid) {
+    return null;
+  }
   var artifact = classifyArtifactByExtension_(ext, suffix);
   if (!artifact) {
     return null;
@@ -283,7 +288,8 @@ function parseInboxMeetingFilename_(fileName) {
 
   return {
     meetingId: meetingId,
-    dateStamp: dateStamp,
+    startStamp: startStamp,
+    uuid: uuid,
     artifact: artifact,
     extension: ext
   };
