@@ -1,5 +1,6 @@
 /**
- * rules sheet lookup — title key → folder/filename templates.
+ * rules sheet lookup — title pattern → folder/filename templates.
+ * Variable titles use ${client_name}; match longest normalized prefix first.
  * Date/time placeholders use the meeting start date (not "now").
  */
 
@@ -9,7 +10,6 @@ var RULES_LOOKUP = {
     'ruleType',
     'title',
     'firstName',
-    'lastName',
     'folderPath',
     'pdf_FileName',
     'mp4_FileName',
@@ -42,46 +42,136 @@ function transformRulesKey_(str) {
   return String(str || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 }
 
-/**
- * Map of cleaned title → rule fields (from column E onward + name helpers).
- */
-function buildRulesMap_() {
-  var sheet = getRulesSheet_();
-  var values = sheet.getDataRange().getValues();
-  var map = {};
-  if (values.length < 2) {
-    return map;
-  }
+function getClientNamePlaceholderRe_() {
+  return /\$\{\s*client_name\s*\}/gi;
+}
 
-  var headers = values[0];
-  var headerMap = {};
-  for (var h = 0; h < headers.length; h++) {
-    if (headers[h]) {
-      headerMap[String(headers[h]).trim()] = h;
+function hasClientNamePlaceholder_(title) {
+  return getClientNamePlaceholderRe_().test(String(title || ''));
+}
+
+function stripClientNamePlaceholder_(title) {
+  return String(title || '').replace(getClientNamePlaceholderRe_(), '');
+}
+
+function extractClientNameAfterPrefix_(cleanInput, prefixNormalized) {
+  var matchCount = 0;
+  var prefixEndIndex = 0;
+  var i;
+  for (i = 0; i < cleanInput.length; i++) {
+    if (/[a-zA-Z0-9]/.test(cleanInput[i])) {
+      matchCount++;
+    }
+    if (matchCount === prefixNormalized.length) {
+      prefixEndIndex = i + 1;
+      break;
     }
   }
+  return cleanInput.slice(prefixEndIndex).replace(/^[^a-zA-Z0-9]+/, '').trim();
+}
 
+function buildRulesHeaderMap_(headers) {
+  var headerMap = {};
+  var h;
+  for (h = 0; h < headers.length; h++) {
+    if (headers[h]) {
+      headerMap[String(headers[h]).trim().toLowerCase()] = h;
+    }
+  }
+  return headerMap;
+}
+
+function buildRuleFromRow_(row, headerMap) {
+  var rule = {};
+  RULES_LOOKUP.HEADERS.forEach(function (name) {
+    var idx = headerMap[name.toLowerCase()];
+    rule[name] = idx !== undefined ? row[idx] : '';
+  });
+  rule.title = String(rule.title || '');
+  return rule;
+}
+
+/**
+ * Sorted dictionary: longest normalized prefix first.
+ * Variable rows (${client_name}) match by prefix; others match exact.
+ */
+function buildRulesListFromValues_(values) {
+  var list = [];
+  if (!values || values.length < 2) {
+    return list;
+  }
+
+  var headerMap = buildRulesHeaderMap_(values[0]);
   var titleIdx = headerMap.title !== undefined ? headerMap.title : 1;
-  for (var i = 1; i < values.length; i++) {
+  var seen = {};
+  var i;
+  for (i = 1; i < values.length; i++) {
     var row = values[i];
     var title = row[titleIdx];
     if (!title) continue;
-    var cleanKey = transformRulesKey_(title);
-    if (!cleanKey || map[cleanKey]) continue;
 
-    var rule = { title: String(title) };
-    RULES_LOOKUP.HEADERS.forEach(function (name) {
-      var idx = headerMap[name];
-      rule[name] = idx !== undefined ? row[idx] : '';
+    var original = String(title);
+    var hasVariable = hasClientNamePlaceholder_(original);
+    var prefixNormalized = transformRulesKey_(
+      hasVariable ? stripClientNamePlaceholder_(original) : original
+    );
+    if (!prefixNormalized || seen[prefixNormalized]) continue;
+    seen[prefixNormalized] = true;
+
+    var rule = buildRuleFromRow_(row, headerMap);
+    rule.title = original;
+    list.push({
+      rule: rule,
+      hasVariable: hasVariable,
+      prefixNormalized: prefixNormalized
     });
-    map[cleanKey] = rule;
   }
-  return map;
+
+  list.sort(function (a, b) {
+    return b.prefixNormalized.length - a.prefixNormalized.length;
+  });
+  return list;
 }
 
-function lookupRuleByTitle_(rulesMap, title) {
-  var key = transformRulesKey_(title);
-  return key && rulesMap[key] ? rulesMap[key] : null;
+function buildRulesList_() {
+  return buildRulesListFromValues_(getRulesSheet_().getDataRange().getValues());
+}
+
+function matchRuleByTitle_(rulesList, title) {
+  var cleanInput = String(title || '').trim();
+  var normalizedInput = transformRulesKey_(cleanInput);
+  if (!normalizedInput || !rulesList || !rulesList.length) {
+    return null;
+  }
+
+  var i;
+  for (i = 0; i < rulesList.length; i++) {
+    var item = rulesList[i];
+    var isMatch = item.hasVariable
+      ? normalizedInput.indexOf(item.prefixNormalized) === 0
+      : normalizedInput === item.prefixNormalized;
+
+    if (!isMatch) continue;
+
+    var clientName = '';
+    if (item.hasVariable) {
+      clientName = extractClientNameAfterPrefix_(cleanInput, item.prefixNormalized);
+    }
+    return { rule: item.rule, clientName: clientName };
+  }
+  return null;
+}
+
+function resolveFirstName_(rule, clientName) {
+  var fromRule = String((rule && rule.firstName) || '').trim();
+  if (fromRule) {
+    return fromRule;
+  }
+  var name = String(clientName || '').trim();
+  if (!name) {
+    return '';
+  }
+  return name.split(/\s+/)[0];
 }
 
 /**
@@ -104,16 +194,15 @@ function buildMeetingTimeVariables_(meetingStart, timezone) {
   };
 }
 
-function buildRulesReplacementVars_(rowData, rule, meetingStart, timezone) {
+function buildRulesReplacementVars_(rowData, rule, meetingStart, timezone, clientName) {
   var timeVars = buildMeetingTimeVariables_(meetingStart, timezone);
   if (!timeVars) {
     return null;
   }
-  var firstName = String((rule && rule.firstName) || '').trim();
-  var lastName = String((rule && rule.lastName) || '').trim();
+  var trimmedClient = String(clientName || '').trim();
   var vars = {
-    firstName: firstName,
-    lastName: lastName,
+    firstName: resolveFirstName_(rule, trimmedClient),
+    client_name: trimmedClient,
     title: String(rowData.title || (rule && rule.title) || '').trim(),
     current_year: timeVars.current_year,
     current_quarter: timeVars.current_quarter,
