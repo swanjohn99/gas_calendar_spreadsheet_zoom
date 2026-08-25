@@ -209,13 +209,11 @@ function mergeArtifactResults_(left, right) {
 
 function buildOrganizeItem_(rowData, artifact, sourceName, finalPath, status, url, source) {
   var meetingId = String(rowData.zoom_meeting_id || '').replace(/\D/g, '');
-  var timezone = getConfig_().timezone;
-  var meetingDateIso = formatSheetDateOnly_(rowData.start, timezone);
   return {
     event_id: String(rowData.event_id || ''),
     title: String(rowData.title || ''),
     zoom_meeting_id: meetingId,
-    dateStamp: meetingDateIso ? formatMmDdYy_(meetingDateIso) : '',
+    dateStamp: formatDateValue_(rowData.start) || '',
     artifact: artifact,
     source: source || 'inbox',
     inboxName: sourceName,
