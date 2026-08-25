@@ -90,23 +90,23 @@ Full calendar title is stored in `title`. Rules match that title:
 
 ## Drive inbox + rules
 
-Inbox files are matched to a sheet row by **Zoom meeting ID + start date**, then renamed/filed using the `rules` sheet.
+Inbox files are matched to a sheet row by **Zoom meeting ID + `start` date and time** (`yyyy-MM-dd HH:mm:ss`, same string as API `meeting_start_date`). Same meeting ID on the same day at different times maps to different rows.
 
-**Zoom API sync** (audio, transcript, chat, summary) uses the same row matching and `rules` templates but skips MP4 — video still comes from the Drive inbox.
-
-Date stamp format: `MM.DD.YY` from meeting `start` (e.g. `03.20.26`).
+**Zoom API sync** (audio, transcript, chat, summary) uses `rules` templates but skips MP4 — video still comes from the Drive inbox. Zoom lookup is by meeting ID + `start` (2h window).
 
 | Artifact | Source | Filename pattern |
 |----------|--------|------------------|
-| video | Drive inbox (Python) | `{zoom_meeting_id}-{MM.DD.YY}.mp4` |
-| audio | Zoom API or inbox | `{zoom_meeting_id}-{MM.DD.YY}.m4a` |
-| pdf | Zoom API or inbox | `{zoom_meeting_id}-{MM.DD.YY}.pdf` |
-| transcript | Zoom API or inbox | `{zoom_meeting_id}-{MM.DD.YY}.txt` |
-| chat | Zoom API or inbox | `{zoom_meeting_id}-{MM.DD.YY}-chat.txt` |
+| video | Drive inbox (Python) | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.mp4` |
+| audio | Zoom API or inbox | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.m4a` |
+| pdf | Zoom API or inbox | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.pdf` |
+| transcript | Zoom API or inbox | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.txt` |
+| chat | Zoom API or inbox | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}-chat.txt` |
+
+Example: `87824741880-2026-07-30 14:30:00_aDYqeqPTTdS7uaX92HflhQ==.mp4`
 
 Flow:
 
-1. Parse inbox name → meeting ID + date → find row on `events` (Zoom sync matches by meeting ID + start date instead)
+1. Parse inbox name → meeting ID + start datetime + UUID → find row on `events` (Zoom sync matches by meeting ID + `start` time instead)
 2. Look up `rules` by row `title` (prefix or exact; see Title parsing)
 3. Expand `folderPath` + artifact filename templates with `${firstName}`, `${client_name}`, and meeting-start placeholders (`${current_year}`, `${current_quarter}`, `${currentDate}`, `${current_day}`)
 4. Copy into `{CLIENT_MEETINGS_ROOT}/{folderPath segments}/` under the template filename; write URL columns
