@@ -107,13 +107,13 @@ Date stamp format: `MM.DD.YY` from meeting `start` (e.g. `03.20.26`).
 Flow:
 
 1. Parse inbox name → meeting ID + date → find row on `events` (Zoom sync matches by meeting ID + start date instead)
-2. Look up `rules` by row `title` (alphanumeric-insensitive)
-3. Expand `folderPath` + artifact filename templates with `${firstName}` / `${lastName}` from **rules**, and meeting-start placeholders (`${current_year}`, `${current_quarter}`, `${currentDate}`, `${current_day}`)
+2. Look up `rules` by row `title` (prefix or exact; see Title parsing)
+3. Expand `folderPath` + artifact filename templates with `${firstName}`, `${client_name}`, and meeting-start placeholders (`${current_year}`, `${current_quarter}`, `${currentDate}`, `${current_day}`)
 4. Copy into `{CLIENT_MEETINGS_ROOT}/{folderPath segments}/` under the template filename; write URL columns
 
 On calendar import, `email (yes or no)` on the event row is copied from the matching `rules.email` value (`yesEmail` / `noEmail`).
 
-`rules` columns: `ruleType`, `title`, `firstName`, `lastName`, `folderPath`, `pdf_FileName`, `mp4_FileName`, `m4a_FileName`, `transcript_FileName`, `chat_FileName`, `email`
+`rules` columns: `ruleType`, `title`, `firstName`, `folderPath`, `pdf_FileName`, `mp4_FileName`, `m4a_FileName`, `transcript_FileName`, `chat_FileName`, `email`
 
 Segment part files (e.g. `*_1.mp4`) are skipped.
 
