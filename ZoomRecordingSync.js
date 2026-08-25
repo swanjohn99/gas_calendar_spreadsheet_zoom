@@ -33,7 +33,7 @@ function syncZoomRecordings_() {
 
   var config = getConfig_();
   var zoom = getZoomConfig_();
-  var rulesMap = buildRulesMap_();
+  var rulesList = buildRulesList_();
   var candidates = getZoomSyncCandidateRows_(config.timezone);
   var result = emptyArtifactResult_(true, '');
   var recordingsCache = {};
