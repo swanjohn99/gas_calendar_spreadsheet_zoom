@@ -116,7 +116,7 @@ function createEmailDraftsForRows_(sheet, rows) {
 
     try {
       var subject = buildCoachingEmailSubject_(row.data, config);
-      var firstName = getRulesFirstName_(row.data, rulesMap);
+      var firstName = getRulesFirstName_(row.data, rulesList);
       var plainBody = buildCoachingEmailPlainBody_(row.data, config, firstName);
       var htmlBody = buildCoachingEmailHtmlBody_(row.data, config, firstName);
       var options = {
