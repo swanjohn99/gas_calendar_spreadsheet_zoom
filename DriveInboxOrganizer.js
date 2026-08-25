@@ -79,13 +79,14 @@ function organizeDriveInbox_() {
  */
 function fileArtifactForMeetingRow_(rowEntry, artifact, content, context) {
   var rowData = rowEntry.data;
-  var rule = lookupRuleByTitle_(context.rulesMap, rowData.title);
-  if (!rule) {
+  var match = matchRuleByTitle_(context.rulesList, rowData.title);
+  if (!match || !match.rule) {
     Logger.log('No rules row for title: ' + rowData.title);
     return { status: 'skipped', reason: 'no_rule' };
   }
+  var rule = match.rule;
 
-  var vars = buildRulesReplacementVars_(rowData, rule, rowData.start, context.timezone);
+  var vars = buildRulesReplacementVars_(rowData, rule, rowData.start, context.timezone, match.clientName);
   if (!vars) {
     Logger.log('Missing meeting start for row: ' + rowData.title);
     return { status: 'skipped', reason: 'missing_start' };
