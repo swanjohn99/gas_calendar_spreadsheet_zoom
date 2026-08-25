@@ -174,7 +174,7 @@ Same sheet; includes rows even if `email_draft_saved` is set. (`type=non_trainin
 
 ## Sheet columns
 
-**events:** `event_id`, `title`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `updated`, `email (yes or no)`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`
+**events:** `event_id`, `title`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `updated`, `email (yes or no)`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`, `zoom_uuid`
 
 `email (yes or no)` is copied from `rules` on import (`yesEmail` / `noEmail`). Drafts only run when the value is `yesEmail`; body greeting uses `rules.firstName` or the first word of `client_name`.
 
