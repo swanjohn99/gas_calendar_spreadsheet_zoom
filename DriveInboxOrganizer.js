@@ -47,14 +47,14 @@ function organizeDriveInbox_() {
 
     var parsed = parseInboxMeetingFilename_(fileName);
     if (!parsed) {
-      Logger.log('Inbox filename not MeetingID-date: ' + fileName);
+      Logger.log('Inbox filename not MeetingID-datetime-uuid: ' + fileName);
       result.skipped++;
       continue;
     }
 
-    var rowEntry = rowIndex[parsed.meetingId + '|' + parsed.dateStamp];
+    var rowEntry = rowIndex[meetingRowIndexKey_(parsed.meetingId, parsed.startStamp)];
     if (!rowEntry) {
-      Logger.log('No sheet row for ' + parsed.meetingId + ' on ' + parsed.dateStamp + ': ' + fileName);
+      Logger.log('No sheet row for ' + parsed.meetingId + ' at ' + parsed.startStamp + ': ' + fileName);
       result.skipped++;
       continue;
     }
@@ -68,6 +68,10 @@ function organizeDriveInbox_() {
       rulesList: rulesList,
       timezone: timezone
     });
+    if ((filed.status === 'copied' || filed.status === 'deduped') && parsed.uuid) {
+      writeZoomUuid_(rowEntry.sheet, rowEntry.headerMap, rowEntry.sheetRow, parsed.uuid);
+      rowEntry.data.zoom_uuid = parsed.uuid;
+    }
     mergeArtifactOutcome_(result, filed);
   }
 
