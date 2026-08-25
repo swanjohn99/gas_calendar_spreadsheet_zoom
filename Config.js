@@ -57,7 +57,8 @@ var CONFIG = {
     'pdf_url',
     'audio_url',
     'transcript_url',
-    'chat_url'
+    'chat_url',
+    'zoom_uuid'
   ]
 };
 
