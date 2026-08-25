@@ -29,7 +29,7 @@ function organizeDriveInbox_() {
   }
 
   var timezone = getConfig_().timezone;
-  var rulesMap = buildRulesMap_();
+  var rulesList = buildRulesList_();
   var rowIndex = buildMeetingRowIndex_(timezone);
   var inbox = DriveApp.getFolderById(config.inboxFolderId);
   var files = inbox.getFiles();
