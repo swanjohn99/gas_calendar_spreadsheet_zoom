@@ -144,9 +144,9 @@ function removeRejectedEventRows_(sheet, rows, rejectedIds, sheetName) {
   return deleted;
 }
 
-function mapCalendarEventToRow_(event, rulesMap) {
+function mapCalendarEventToRow_(event, rulesList) {
   var title = event.getTitle() || '';
-  var rule = lookupRuleByTitle_(rulesMap || {}, title);
+  var match = matchRuleByTitle_(rulesList || [], title);
   var config = getConfig_();
   var row = {
     event_id: event.getId(),
@@ -164,7 +164,7 @@ function mapCalendarEventToRow_(event, rulesMap) {
     transcript_url: '',
     chat_url: ''
   };
-  row[config.emailFlagColumn] = rule ? String(rule.email || '').trim() : '';
+  row[config.emailFlagColumn] = match && match.rule ? String(match.rule.email || '').trim() : '';
   return row;
 }
 
