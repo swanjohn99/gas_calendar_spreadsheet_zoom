@@ -179,3 +179,5 @@ Same sheet; includes rows even if `email_draft_saved` is set. (`type=non_trainin
 `email (yes or no)` is copied from `rules` on import (`yesEmail` / `noEmail`). Drafts only run when the value is `yesEmail`; body greeting uses `rules.firstName` or the first word of `client_name`.
 
 `zoom_meeting_id` is parsed from the Zoom URL in `location` (e.g. `https://us02web.zoom.us/j/87824741880` → `87824741880`).
+
+`zoom_uuid` is the Zoom meeting-instance UUID parsed from the inbox filename after a successful copy or dedupe. Calendar re-import preserves it.
