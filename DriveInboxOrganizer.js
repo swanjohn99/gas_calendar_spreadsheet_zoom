@@ -64,7 +64,7 @@ function organizeDriveInbox_() {
       source: 'inbox'
     }, {
       clientMeetingsRootId: config.clientMeetingsRootId,
-      rulesMap: rulesMap,
+      rulesList: rulesList,
       timezone: timezone
     });
     mergeArtifactOutcome_(result, filed);
