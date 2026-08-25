@@ -71,7 +71,7 @@ Re-run **Import Calendar** after header changes to repopulate columns.
 ## Workflow
 
 1. Chrome extension calls **GET** API for pending meetings (MP4 only)
-2. Python uploads **MP4 video** to the Drive **inbox** as `{zoom_meeting_id}-{MM.DD.YY}.mp4`
+2. Python uploads **MP4 video** to the Drive **inbox** as `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.mp4` (`meeting_start_date` from the API, then Zoom UUID)
 3. Scheduled sync (or menu) runs **Sync Zoom Recordings** — pulls audio, transcript, chat, and summary PDF from Zoom API into client folders
 4. **Organize Drive Inbox** (or combined pipeline) matches inbox MP4s by meeting ID + date, applies `rules`, copies/renames, fills URL columns
 5. Email drafts are created on schedule, via the combined menu, or **Create Email Drafts** for selected rows when `email (yes or no)=yesEmail` and required URLs are present
