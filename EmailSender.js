@@ -325,9 +325,9 @@ function getDriveBlobFromUrl_(url) {
   return DriveApp.getFileById(fileId).getBlob();
 }
 
-function getRulesFirstName_(rowData, rulesMap) {
-  var rule = lookupRuleByTitle_(rulesMap || buildRulesMap_(), rowData.title);
-  var firstName = rule ? String(rule.firstName || '').trim() : '';
+function getRulesFirstName_(rowData, rulesList) {
+  var match = matchRuleByTitle_(rulesList || buildRulesList_(), rowData.title);
+  var firstName = match ? resolveFirstName_(match.rule, match.clientName) : '';
   if (firstName) {
     return firstName;
   }
