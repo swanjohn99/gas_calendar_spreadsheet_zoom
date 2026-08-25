@@ -39,7 +39,7 @@ var CONFIG = {
   EMAIL_BODY_PARAGRAPH_NEXT: "Your next call, We're looking forward to continuing the conversation and supporting your progress.",
   EMAIL_BODY_PARAGRAPH_QUESTIONS: "If you have any questions or would like to dive deeper into anything that was discussed, please don't hesitate to reach out.",
   EMAIL_BODY_SIGNOFF: 'Warm regards,\nKara',
-  PRESERVED_COLUMNS: ['email_draft_saved', 'video_url', 'pdf_url', 'audio_url', 'transcript_url', 'chat_url'],
+  PRESERVED_COLUMNS: ['email_draft_saved', 'video_url', 'pdf_url', 'audio_url', 'transcript_url', 'chat_url', 'zoom_uuid'],
   RULES_YES_EMAIL: 'yesEmail',
   EMAIL_FLAG_COLUMN: 'email (yes or no)',
   HEADERS: [
