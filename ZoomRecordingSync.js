@@ -86,7 +86,7 @@ function syncZoomRecordings_() {
           source: 'zoom'
         }, {
           clientMeetingsRootId: organizerConfig.clientMeetingsRootId,
-          rulesMap: rulesMap,
+          rulesList: rulesList,
           timezone: config.timezone
         });
         mergeArtifactOutcome_(result, filed);

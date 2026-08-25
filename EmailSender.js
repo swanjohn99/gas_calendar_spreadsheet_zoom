@@ -30,7 +30,7 @@ function createEmailDraftsForRows_(sheet, rows) {
   var config = getConfig_();
   var headerMap = getHeaderIndexMap_(sheet);
   var emailDraftSavedIndex = headerMap.email_draft_saved;
-  var rulesMap = buildRulesMap_();
+  var rulesList = buildRulesList_();
   var created = 0;
   var skipped = 0;
   var errors = 0;
