@@ -226,7 +226,7 @@ function buildCoachingEmailSubject_(rowData, config) {
 }
 
 function buildCoachingEmailPlainBody_(rowData, config, firstName) {
-  firstName = firstName || getRulesFirstName_(rowData, buildRulesMap_());
+  firstName = firstName || getRulesFirstName_(rowData, buildRulesList_());
   var sessionName = getSessionName_(rowData);
   var meetingDay = getMeetingDayPhrase_(parseSheetDate_(rowData.start), config.timezone);
   var recordingUrl = String(rowData.video_url || '').trim();
@@ -258,7 +258,7 @@ function buildCoachingEmailPlainBody_(rowData, config, firstName) {
 }
 
 function buildCoachingEmailHtmlBody_(rowData, config, firstName) {
-  firstName = firstName || getRulesFirstName_(rowData, buildRulesMap_());
+  firstName = firstName || getRulesFirstName_(rowData, buildRulesList_());
   var sessionName = getSessionName_(rowData);
   var meetingDay = getMeetingDayPhrase_(parseSheetDate_(rowData.start), config.timezone);
   var recordingUrl = String(rowData.video_url || '').trim();
