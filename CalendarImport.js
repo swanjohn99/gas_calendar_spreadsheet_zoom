@@ -32,7 +32,7 @@ function syncCalendarEvents_() {
 
   var events = calendar.getEvents(start, end);
   var rejected = {};
-  var rulesMap = buildRulesMap_();
+  var rulesList = buildRulesList_();
   var newEvents = [];
   var updatedCount = 0;
 
