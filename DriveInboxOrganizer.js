@@ -318,12 +318,9 @@ function addSheetRowsToMeetingIndex_(index, sheet, headers, timezone) {
     var row = sheetData.rows[i];
     var meetingId = String(row.data.zoom_meeting_id || '').replace(/\D/g, '');
     if (!meetingId) continue;
-    var meetingDateIso = formatSheetDateOnly_(row.data.start, timezone);
-    if (!meetingDateIso) continue;
-    var dateStamp = formatMmDdYy_(meetingDateIso);
-    var key = meetingId + '|' + dateStamp;
-    if (index[key]) continue;
-    index[key] = {
+    var startStamp = formatMeetingStartStamp_(row.data.start);
+    if (!startStamp) continue;
+    index[meetingRowIndexKey_(meetingId, startStamp)] = {
       sheet: sheet,
       headerMap: sheetData.headerMap,
       sheetRow: row.sheetRow,
@@ -332,10 +329,12 @@ function addSheetRowsToMeetingIndex_(index, sheet, headers, timezone) {
   }
 }
 
-function formatMmDdYy_(meetingDateIso) {
-  var parts = String(meetingDateIso).split('-');
-  if (parts.length !== 3) return meetingDateIso;
-  return parts[1] + '.' + parts[2] + '.' + parts[0].slice(-2);
+function meetingRowIndexKey_(meetingId, startStamp) {
+  return String(meetingId || '') + '|' + String(startStamp || '');
+}
+
+function formatMeetingStartStamp_(value) {
+  return formatDateValue_(value) || '';
 }
 
 function sanitizeDriveName_(value) {
