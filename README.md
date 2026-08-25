@@ -81,7 +81,12 @@ Re-run **Calendar Tools → Schedule** after deploy to refresh sync triggers.
 
 ## Title parsing
 
-Full calendar title is stored in `title`. Attendee first/last name come from the `rules` sheet (matched by title), not event columns.
+Full calendar title is stored in `title`. Rules match that title:
+
+- Title with `${client_name}`: alphanumeric prefix match (longest prefix wins); remainder is `client_name`
+- Title without a placeholder: exact alphanumeric match
+- `firstName` for email and `${firstName}` templates: `rules.firstName` if set, else `client_name` trimmed and split on space (`[0]`)
+- No `lastName`
 
 ## Drive inbox + rules
 
