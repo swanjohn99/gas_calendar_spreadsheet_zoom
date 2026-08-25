@@ -45,7 +45,7 @@ function syncCalendarEvents_() {
       return;
     }
 
-    var mapped = mapCalendarEventToRow_(event, rulesMap);
+    var mapped = mapCalendarEventToRow_(event, rulesList);
     var action = upsertEventRow_(
       sheet,
       mapped,
