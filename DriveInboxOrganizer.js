@@ -320,31 +320,111 @@ function classifyArtifactByExtension_(ext, suffix) {
   return null;
 }
 
-function buildMeetingRowIndex_(timezone) {
-  var index = {};
-  addSheetRowsToMeetingIndex_(index, getEventsSheet_(), null, timezone);
-  return index;
+function collectInboxFiles_(inboxFolder) {
+  var files = inboxFolder.getFiles();
+  var inboxFiles = [];
+  while (files.hasNext()) {
+    inboxFiles.push(files.next());
+  }
+  return inboxFiles;
 }
 
-function addSheetRowsToMeetingIndex_(index, sheet, headers, timezone) {
-  var sheetData = getSheetDataObjects_(sheet, headers);
+function buildMeetingRowsByMeetingId_() {
+  var byId = {};
+  var sheet = getEventsSheet_();
+  var sheetData = getSheetDataObjects_(sheet, null);
   for (var i = 0; i < sheetData.rows.length; i++) {
     var row = sheetData.rows[i];
     var meetingId = String(row.data.zoom_meeting_id || '').replace(/\D/g, '');
     if (!meetingId) continue;
     var startStamp = formatMeetingStartStamp_(row.data.start);
     if (!startStamp) continue;
-    index[meetingRowIndexKey_(meetingId, startStamp)] = {
+    if (!byId[meetingId]) {
+      byId[meetingId] = [];
+    }
+    byId[meetingId].push({
       sheet: sheet,
       headerMap: sheetData.headerMap,
       sheetRow: row.sheetRow,
-      data: row.data
-    };
+      data: row.data,
+      startStamp: startStamp,
+      sortTime: parseSheetDate_(row.data.start)
+    });
   }
+  Object.keys(byId).forEach(function (meetingId) {
+    byId[meetingId].sort(compareMeetingRowsByStart_);
+  });
+  return byId;
 }
 
-function meetingRowIndexKey_(meetingId, startStamp) {
-  return String(meetingId || '') + '|' + String(startStamp || '');
+function buildInboxInstancesByMeetingId_(inboxFiles) {
+  var instances = {};
+  for (var i = 0; i < inboxFiles.length; i++) {
+    var fileName = inboxFiles[i].getName();
+    if (isSegmentPartFile_(fileName)) {
+      continue;
+    }
+    var parsed = parseInboxMeetingFilename_(fileName);
+    if (!parsed) {
+      continue;
+    }
+    var meetingId = parsed.meetingId;
+    var uuid = parsed.uuid;
+    if (!instances[meetingId]) {
+      instances[meetingId] = {};
+    }
+    if (!instances[meetingId][uuid]) {
+      instances[meetingId][uuid] = {
+        uuid: uuid,
+        startStamp: parsed.startStamp,
+        sortTime: parseSheetDate_(parsed.startStamp)
+      };
+    }
+  }
+
+  var byMeetingId = {};
+  Object.keys(instances).forEach(function (meetingId) {
+    var list = Object.keys(instances[meetingId]).map(function (uuid) {
+      return instances[meetingId][uuid];
+    });
+    list.sort(compareInboxInstancesByTime_);
+    byMeetingId[meetingId] = list;
+  });
+  return byMeetingId;
+}
+
+function buildChronologicalRowLookup_(rowsByMeetingId, instancesByMeetingId) {
+  var lookup = {};
+  Object.keys(instancesByMeetingId).forEach(function (meetingId) {
+    var rows = rowsByMeetingId[meetingId] || [];
+    var instances = instancesByMeetingId[meetingId];
+    for (var i = 0; i < instances.length && i < rows.length; i++) {
+      lookup[inboxInstanceLookupKey_(meetingId, instances[i].uuid)] = rows[i];
+    }
+  });
+  return lookup;
+}
+
+function inboxInstanceLookupKey_(meetingId, uuid) {
+  return String(meetingId || '') + '|' + String(uuid || '');
+}
+
+function compareMeetingRowsByStart_(a, b) {
+  var ta = a.sortTime ? a.sortTime.getTime() : 0;
+  var tb = b.sortTime ? b.sortTime.getTime() : 0;
+  if (ta !== tb) {
+    return ta - tb;
+  }
+  return String(a.startStamp).localeCompare(String(b.startStamp));
+}
+
+function compareInboxInstancesByTime_(a, b) {
+  var ta = a.sortTime ? a.sortTime.getTime() : 0;
+  var tb = b.sortTime ? b.sortTime.getTime() : 0;
+  if (ta !== tb) {
+    return ta - tb;
+  }
+  return String(a.uuid).localeCompare(String(b.uuid));
 }
 
 function formatMeetingStartStamp_(value) {
