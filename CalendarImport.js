@@ -162,7 +162,12 @@ function mapCalendarEventToRow_(event, rulesList) {
     pdf_url: '',
     audio_url: '',
     transcript_url: '',
-    chat_url: ''
+    chat_url: '',
+    video_uuid: '',
+    pdf_uuid: '',
+    audio_uuid: '',
+    transcript_uuid: '',
+    chat_uuid: ''
   };
   row[config.emailFlagColumn] = match && match.rule ? String(match.rule.email || '').trim() : '';
   return row;

@@ -71,6 +71,17 @@ function organizeDriveInbox_() {
     if ((filed.status === 'copied' || filed.status === 'deduped') && parsed.uuid) {
       writeZoomUuid_(rowEntry.sheet, rowEntry.headerMap, rowEntry.sheetRow, parsed.uuid);
       rowEntry.data.zoom_uuid = parsed.uuid;
+      writeArtifactUuid_(
+        rowEntry.sheet,
+        rowEntry.headerMap,
+        rowEntry.sheetRow,
+        parsed.artifact,
+        parsed.uuid
+      );
+      var uuidColumn = getArtifactUuidColumn_(parsed.artifact);
+      if (uuidColumn) {
+        rowEntry.data[uuidColumn] = parsed.uuid;
+      }
     }
     mergeArtifactOutcome_(result, filed);
   }
