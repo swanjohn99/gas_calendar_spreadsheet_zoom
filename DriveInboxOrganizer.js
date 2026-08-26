@@ -3,8 +3,8 @@
  * look up rules by title, rename from templates, copy into folderPath,
  * write artifact URLs, per-artifact UUIDs, and zoom_uuid.
  *
- * Inbox filename: `{zoomMeetingId}-{yyyy-MM-dd HH:mm:ss}_{uuid}.{ext}`
- * Optional chat: `{zoomMeetingId}-{yyyy-MM-dd HH:mm:ss}_{uuid}-chat.txt`
+ * Inbox filename: `{zoomMeetingId}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}.{ext}`
+ * Optional chat: `{zoomMeetingId}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_chat.txt`
  */
 
 var DRIVE_INBOX_ORGANIZER = {
