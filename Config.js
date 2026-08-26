@@ -7,20 +7,11 @@ var CONFIG = {
     'TrainingEvents',
     'Non-Training Events'
   ],
-  RULES_SHEET_NAME: 'rules',
-  SCRIPT_PROPERTY_KEYS: {
-    API_KEY: 'API_KEY',
-    CALENDAR_ID: 'CALENDAR_ID',
-    ZOOM_ARCHIVE_SPREADSHEET_ID: 'ZOOM_ARCHIVE_SPREADSHEET_ID',
-    DRIVE_INBOX_FOLDER_ID: 'DRIVE_INBOX_FOLDER_ID',
-    CLIENT_MEETINGS_ROOT_FOLDER_ID: 'CLIENT_MEETINGS_ROOT_FOLDER_ID'
-  },
   CALENDAR_ID: 'primary',
   LOOKBACK_DAYS: 7,
   LOOKAHEAD_DAYS: 30,
   ARCHIVE_AFTER_DAYS: 30,
   ZOOM_ARCHIVE_SHEET_NAME: 'zoom_archive',
-  // Scheduled sync hours (America/Chicago). Last hour of the day emails the combined report.
   SYNC_HOURS: [9, 12, 15, 17],
   TIMEZONE: 'America/Chicago',
   DATE_FORMAT: 'yyyy-MM-dd HH:mm:ss',
@@ -60,14 +51,13 @@ var CONFIG = {
 
 function getConfig_() {
   var props = PropertiesService.getScriptProperties();
-  var keys = CONFIG.SCRIPT_PROPERTY_KEYS;
   return {
     eventsSheetName: CONFIG.EVENTS_SHEET_NAME,
-    calendarId: props.getProperty(keys.CALENDAR_ID) || CONFIG.CALENDAR_ID,
+    calendarId: props.getProperty('CALENDAR_ID') || CONFIG.CALENDAR_ID,
     lookbackDays: CONFIG.LOOKBACK_DAYS,
     lookaheadDays: CONFIG.LOOKAHEAD_DAYS,
     archiveAfterDays: CONFIG.ARCHIVE_AFTER_DAYS,
-    zoomArchiveSpreadsheetId: props.getProperty(keys.ZOOM_ARCHIVE_SPREADSHEET_ID),
+    zoomArchiveSpreadsheetId: props.getProperty('ZOOM_ARCHIVE_SPREADSHEET_ID'),
     zoomArchiveSheetName: CONFIG.ZOOM_ARCHIVE_SHEET_NAME,
     syncHours: CONFIG.SYNC_HOURS.slice(),
     timezone: CONFIG.TIMEZONE,
@@ -87,8 +77,8 @@ function getConfig_() {
     rulesYesEmail: CONFIG.RULES_YES_EMAIL,
     emailFlagColumn: CONFIG.EMAIL_FLAG_COLUMN,
     headers: CONFIG.HEADERS,
-    apiKey: props.getProperty(keys.API_KEY),
-    driveInboxFolderId: props.getProperty(keys.DRIVE_INBOX_FOLDER_ID),
-    clientMeetingsRootFolderId: props.getProperty(keys.CLIENT_MEETINGS_ROOT_FOLDER_ID)
+    apiKey: props.getProperty('API_KEY'),
+    driveInboxFolderId: props.getProperty('DRIVE_INBOX_FOLDER_ID'),
+    clientMeetingsRootFolderId: props.getProperty('CLIENT_MEETINGS_ROOT_FOLDER_ID')
   };
 }
