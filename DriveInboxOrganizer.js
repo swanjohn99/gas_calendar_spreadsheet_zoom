@@ -188,21 +188,6 @@ function mergeArtifactOutcome_(result, outcome) {
   result.skipped++;
 }
 
-function mergeArtifactResults_(left, right) {
-  left = left || emptyArtifactResult_(false, '');
-  right = right || emptyArtifactResult_(false, '');
-  return {
-    ok: !!(left.ok || right.ok),
-    copied: (left.copied || 0) + (right.copied || 0),
-    skipped: (left.skipped || 0) + (right.skipped || 0),
-    deduped: (left.deduped || 0) + (right.deduped || 0),
-    items: (left.items || []).concat(right.items || []),
-    message: [left.message, right.message].filter(function (part) {
-      return !!String(part || '').trim();
-    }).join(' ')
-  };
-}
-
 function buildOrganizeItem_(rowData, artifact, sourceName, finalPath, status, url, source) {
   var meetingId = String(rowData.zoom_meeting_id || '').replace(/\D/g, '');
   return {
