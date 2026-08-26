@@ -89,7 +89,6 @@ function getConfig_() {
     rulesYesEmail: CONFIG.RULES_YES_EMAIL,
     emailFlagColumn: CONFIG.EMAIL_FLAG_COLUMN,
     headers: CONFIG.HEADERS,
-    apiKey: props.getProperty('API_KEY'),
     driveInboxFolderId: props.getProperty('DRIVE_INBOX_FOLDER_ID'),
     clientMeetingsRootFolderId: props.getProperty('CLIENT_MEETINGS_ROOT_FOLDER_ID')
   };
