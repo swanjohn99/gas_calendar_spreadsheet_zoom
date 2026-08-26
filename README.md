@@ -13,7 +13,7 @@ Bound spreadsheet script that:
 1. Create/open the target Google Spreadsheet.
 2. Open **Extensions > Apps Script** and paste or `clasp push` this project.
 3. Add a `rules` sheet (title pattern with optional `${client_name}` → `folderPath` + artifact filenames). See Drive inbox section.
-4. Set Script Properties (**Project Settings > Script Properties**). Key names are defined in `CONFIG.SCRIPT_PROPERTY_KEYS` in [`Config.js`](Config.js):
+4. Set Script Properties (**Project Settings > Script Properties**):
    - `ZOOM_ARCHIVE_SPREADSHEET_ID` — spreadsheet ID for the archive **workbook**
    - `API_KEY` — secret for `doGet`
    - `DRIVE_INBOX_FOLDER_ID` — Drive folder where Python drops recording artifacts
