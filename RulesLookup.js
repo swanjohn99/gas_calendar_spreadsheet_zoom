@@ -193,7 +193,18 @@ function buildMeetingTimeVariables_(meetingStart, timezone) {
     current_year: Utilities.formatDate(date, tz, 'yyyy'),
     current_quarter: 'q' + quarterNumber,
     currentDate: stamp,
-    current_day: stamp
+    current_day: stamp,
+    current_date: stamp
+  };
+}
+
+function getRulesDatePlaceholderAliases_(timeVars) {
+  return {
+    current_year: timeVars.current_year,
+    current_quarter: timeVars.current_quarter,
+    currentDate: timeVars.currentDate,
+    current_day: timeVars.current_day,
+    current_date: timeVars.current_date
   };
 }
 
@@ -206,12 +217,9 @@ function buildRulesReplacementVars_(rowData, rule, meetingStart, timezone, clien
   var vars = {
     firstName: resolveFirstName_(rule, trimmedClient),
     client_name: trimmedClient,
-    title: String(rowData.title || (rule && rule.title) || '').trim(),
-    current_year: timeVars.current_year,
-    current_quarter: timeVars.current_quarter,
-    currentDate: timeVars.currentDate,
-    current_day: timeVars.current_day
+    title: String(rowData.title || (rule && rule.title) || '').trim()
   };
+  Object.assign(vars, getRulesDatePlaceholderAliases_(timeVars));
   return vars;
 }
 
