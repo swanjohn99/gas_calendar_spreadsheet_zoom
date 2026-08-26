@@ -19,8 +19,8 @@ Bound spreadsheet script that:
    - `DRIVE_INBOX_FOLDER_ID` — Drive folder where Python drops recording artifacts
    - `CLIENT_MEETINGS_ROOT_FOLDER_ID` — root folder for `rules` `folderPath` segments
    - optional `CALENDAR_ID` — defaults to `primary`
-5. Reload the spreadsheet. Use menu **Calendar Tools**.
-6. Re-authorize the script after `clasp push` if Drive scope changed.
+6. Reload the spreadsheet. Use menu **Calendar Tools**.
+7. Re-authorize the script after `clasp push` if Drive scope changed.
 
 ## Clasp
 
