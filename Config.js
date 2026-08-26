@@ -69,7 +69,7 @@ function getConfig_() {
     lookbackDays: CONFIG.LOOKBACK_DAYS,
     lookaheadDays: CONFIG.LOOKAHEAD_DAYS,
     archiveAfterDays: CONFIG.ARCHIVE_AFTER_DAYS,
-    zoomArchiveSpreadsheetId: props.getProperty('ZOOM_ARCHIVE_SPREADSHEET_ID'),
+    zoomArchiveSpreadsheetId: CONFIG.ZOOM_ARCHIVE_SPREADSHEET_ID,
     zoomArchiveSheetName: CONFIG.ZOOM_ARCHIVE_SHEET_NAME,
     syncHours: CONFIG.SYNC_HOURS.slice(),
     timezone: CONFIG.TIMEZONE,
