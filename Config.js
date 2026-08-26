@@ -7,7 +7,6 @@ var CONFIG = {
   ZOOM_ARCHIVE_SPREADSHEET_ID: '1u73hwjfBzAJZeHHTZea8hBYyAGegU1ZUYC1cfnWOuks',
   ZOOM_ARCHIVE_SHEET_NAME: 'zoom_archive',
   SYNC_HOURS: [9, 12, 15, 17],
-  TIMEZONE: 'America/Chicago',
   DATE_FORMAT: 'yyyy-MM-dd HH:mm:ss',
   ZOOM_LOCATION_PATTERN: 'https?:\\/\\/([\\w.-]+\\.)?zoom\\.us\\/',
   EMAIL_SUBJECT_PREFIX: 'Coaching call recording ',
