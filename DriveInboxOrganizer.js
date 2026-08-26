@@ -265,19 +265,19 @@ function isSegmentPartFile_(fileName) {
 }
 
 /**
- * `{meetingId}-{yyyy-MM-dd HH:mm:ss}_{uuid}.ext`
- * or `{meetingId}-{yyyy-MM-dd HH:mm:ss}_{uuid}-chat.txt`
+ * `{meetingId}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}.ext`
+ * or `{meetingId}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_chat.txt`
  */
 function parseInboxMeetingFilename_(fileName) {
   var match = String(fileName || '').match(
-    /^(\d+)\s*-\s*(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2})_([^.]+?)(?:-(chat|transcript))?(\.[^.]+)$/i
+    /^(\d+)_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})_([^.]+?)(?:_(chat|transcript))?(\.[^.]+)$/i
   );
   if (!match) {
     return null;
   }
 
   var meetingId = match[1];
-  var startStamp = String(match[2] || '').replace('T', ' ');
+  var startStamp = match[2] + ' ' + String(match[3] || '').replace(/-/g, ':');
   var uuid = String(match[3] || '').trim();
   var suffix = String(match[4] || '').toLowerCase();
   var ext = String(match[5] || '').toLowerCase();

@@ -85,11 +85,11 @@ Python drops all artifacts in the Drive inbox. GAS copies them into `rules` fold
 
 | Artifact | Source | Filename pattern |
 |----------|--------|------------------|
-| video | Drive inbox (Python) | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.mp4` |
-| audio | Drive inbox (Python) | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.m4a` |
-| pdf | Drive inbox (Python) | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.pdf` |
-| transcript | Drive inbox (Python) | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.txt` |
-| chat | Drive inbox (Python) | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}-chat.txt` |
+| video | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}.mp4` |
+| audio | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}.m4a` |
+| pdf | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}.pdf` |
+| transcript | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}.txt` |
+| chat | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_chat.txt` |
 
 Example: `87824741880-2026-07-30 14:30:00_aDYqeqPTTdS7uaX92HflhQ==.mp4`
 
