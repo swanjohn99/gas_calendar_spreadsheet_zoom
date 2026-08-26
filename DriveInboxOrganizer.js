@@ -135,15 +135,11 @@ function fileArtifactForMeetingRow_(rowEntry, artifact, content, context) {
     };
   }
 
-  var savedFile;
-  if (content.driveFile) {
-    savedFile = content.driveFile.makeCopy(targetFileName, targetFolder);
-  } else if (content.blob) {
-    savedFile = targetFolder.createFile(content.blob).setName(targetFileName);
-  } else {
-    Logger.log('No file content for artifact ' + artifact);
+  if (!content.driveFile) {
+    Logger.log('No Drive file for artifact ' + artifact);
     return { status: 'skipped', reason: 'missing_content' };
   }
+  var savedFile = content.driveFile.makeCopy(targetFileName, targetFolder);
 
   writeArtifactUrl_(
     rowEntry.sheet,
