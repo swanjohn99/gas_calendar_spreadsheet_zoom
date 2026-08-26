@@ -88,15 +88,15 @@ Full calendar title is stored in `title`. Rules match that title:
 
 Inbox files are matched to a sheet row by **Zoom meeting ID + `start` date and time** (`yyyy-MM-dd HH:mm:ss`, same string as API `meeting_start_date`). Same meeting ID on the same day at different times maps to different rows.
 
-**Zoom API sync** (audio, transcript, chat, summary) uses `rules` templates but skips MP4 — video still comes from the Drive inbox. Zoom lookup is by meeting ID + `start` (2h window).
+Python drops all artifacts in the Drive inbox. GAS copies them into `rules` folders and writes Drive URLs.
 
 | Artifact | Source | Filename pattern |
 |----------|--------|------------------|
 | video | Drive inbox (Python) | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.mp4` |
-| audio | Zoom API or inbox | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.m4a` |
-| pdf | Zoom API or inbox | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.pdf` |
-| transcript | Zoom API or inbox | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.txt` |
-| chat | Zoom API or inbox | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}-chat.txt` |
+| audio | Drive inbox (Python) | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.m4a` |
+| pdf | Drive inbox (Python) | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.pdf` |
+| transcript | Drive inbox (Python) | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.txt` |
+| chat | Drive inbox (Python) | `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}-chat.txt` |
 
 Example: `87824741880-2026-07-30 14:30:00_aDYqeqPTTdS7uaX92HflhQ==.mp4`
 
