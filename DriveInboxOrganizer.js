@@ -381,3 +381,12 @@ function writeZoomUuid_(sheet, headerMap, sheetRow, uuid) {
   }
   sheet.getRange(sheetRow, headerMap.zoom_uuid + 1).setValue(uuid);
 }
+
+function writeArtifactUuid_(sheet, headerMap, sheetRow, artifact, uuid) {
+  var header = getArtifactUuidColumn_(artifact);
+  if (!uuid || !header || headerMap[header] === undefined) {
+    Logger.log('No sheet column for artifact uuid: ' + artifact);
+    return;
+  }
+  sheet.getRange(sheetRow, headerMap[header] + 1).setValue(uuid);
+}
