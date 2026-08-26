@@ -61,8 +61,6 @@ If the workflow fails with `401`, re-run `clasp login` locally and update `CLASP
 
 All calendar events with a Zoom link in `location` go into the `events` sheet (color is ignored). Events without a Zoom link are removed if they appear in the sync window.
 
-On first access after upgrade, legacy tabs (`Coaching events`, `Non-Coaching events`, `Events`, `TrainingEvents`, `Non-Training Events`) are renamed/merged into `events`.
-
 Re-run **Import Calendar** after header changes to repopulate columns.
 
 ## Workflow

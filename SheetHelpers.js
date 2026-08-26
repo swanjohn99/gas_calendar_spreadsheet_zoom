@@ -1,88 +1,12 @@
 function getEventsSheet_() {
   var config = getConfig_();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  migrateToEventsSheet_(ss, config);
   var sheet = ss.getSheetByName(config.eventsSheetName);
   if (!sheet) {
     sheet = ss.insertSheet(config.eventsSheetName);
   }
   ensureHeaders_(sheet, config.headers);
   return sheet;
-}
-
-/**
- * Rename the first legacy sheet found to `events`, then merge any other legacy
- * sheets into it and remove the extras.
- */
-function migrateToEventsSheet_(ss, config) {
-  var targetName = config.eventsSheetName;
-  var target = ss.getSheetByName(targetName);
-  var legacyNames = CONFIG.LEGACY_EVENTS_SHEET_NAMES || [];
-
-  if (!target) {
-    for (var i = 0; i < legacyNames.length; i++) {
-      var legacy = ss.getSheetByName(legacyNames[i]);
-      if (legacy) {
-        legacy.setName(targetName);
-        target = legacy;
-        break;
-      }
-    }
-  }
-
-  if (!target) {
-    return;
-  }
-
-  for (var j = 0; j < legacyNames.length; j++) {
-    var extra = ss.getSheetByName(legacyNames[j]);
-    if (!extra || extra.getSheetId() === target.getSheetId()) {
-      continue;
-    }
-    mergeSheetRowsInto_(extra, target, config.headers);
-    ss.deleteSheet(extra);
-  }
-}
-
-function mergeSheetRowsInto_(sourceSheet, targetSheet, headers) {
-  var sourceLastRow = sourceSheet.getLastRow();
-  if (sourceLastRow < 2) {
-    return;
-  }
-
-  var sourceLastCol = Math.max(sourceSheet.getLastColumn(), 1);
-  var sourceHeaders = sourceSheet.getRange(1, 1, 1, sourceLastCol).getValues()[0];
-  var sourceMap = {};
-  for (var h = 0; h < sourceHeaders.length; h++) {
-    if (sourceHeaders[h]) {
-      sourceMap[String(sourceHeaders[h])] = h;
-    }
-  }
-
-  var targetExisting = getSheetDataObjects_(targetSheet, headers);
-  var existingIds = {};
-  targetExisting.rows.forEach(function (row) {
-    if (row.data.event_id) {
-      existingIds[String(row.data.event_id)] = true;
-    }
-  });
-
-  var values = sourceSheet.getRange(2, 1, sourceLastRow - 1, sourceLastCol).getValues();
-  values.forEach(function (row) {
-    var obj = {};
-    headers.forEach(function (header) {
-      var idx = sourceMap[header];
-      obj[header] = idx !== undefined ? row[idx] : '';
-    });
-    var eventId = String(obj.event_id || '');
-    if (eventId && existingIds[eventId]) {
-      return;
-    }
-    if (eventId) {
-      existingIds[eventId] = true;
-    }
-    appendRowObject_(targetSheet, obj, headers);
-  });
 }
 
 function ensureHeaders_(sheet, headers) {
