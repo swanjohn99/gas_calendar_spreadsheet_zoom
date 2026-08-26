@@ -13,7 +13,7 @@ The numeric Zoom meeting number shared by every occurrence of a recurring meetin
 _Avoid_: Meeting ID, event_id
 
 **Start**:
-The meeting datetime on an `events` row (`yyyy-MM-dd HH:mm:ss` in America/Chicago). Date and time together identify which occurrence an inbox file belongs to.
+The meeting datetime on an `events` row (`yyyy-MM-dd HH:mm:ss` in the script timezone from `appsscript.json`). Date and time together identify which occurrence an inbox file belongs to.
 _Avoid_: Date stamp, meeting date
 
 **Zoom UUID**:
