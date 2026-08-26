@@ -125,43 +125,6 @@ Re-running **Organize Drive Inbox** is idempotent: if the artifact URL is alread
 
 **Create Email Drafts** requires `email (yes or no)=yesEmail`, `video_url`, `pdf_url`, `audio_url`, and `transcript_url` (`chat_url` optional). Greeting uses `rules.firstName`, else the first word of `client_name` from the title (`there` if neither). Email body links to `video_url`; attaches PDF, audio, transcript, and chat (if present).
 
-## API
-
-Deploy as web app: **Deploy > New deployment > Web app**
-
-- Execute as: Me
-- Access: your choice (document in deployment)
-
-### GET pending meetings
-
-```text
-GET https://script.google.com/macros/s/DEPLOYMENT_ID/exec?key=YOUR_API_KEY&limit=100
-```
-
-Returns `events` rows where `email_draft_saved` is empty and meeting `start` date is today or earlier (`America/Chicago`):
-
-```json
-{
-  "timezone": "America/Chicago",
-  "count": 1,
-  "data": [
-    {
-      "zoom_meeting_id": "87824741880",
-      "meeting_start_date": "2026-07-30 14:30:00",
-      "title": "Executive Coaching Call: Gary Tober"
-    }
-  ]
-}
-```
-
-### GET all due meetings (no draft filter)
-
-```text
-GET https://script.google.com/macros/s/DEPLOYMENT_ID/exec?key=YOUR_API_KEY&type=all&limit=100
-```
-
-Same sheet; includes rows even if `email_draft_saved` is set. (`type=non_training` is accepted as an alias.)
-
 ## Sheet columns
 
 **events:** `event_id`, `title`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `updated`, `email (yes or no)`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`, `zoom_uuid`, `video_uuid`, `pdf_uuid`, `audio_uuid`, `transcript_uuid`, `chat_uuid`
