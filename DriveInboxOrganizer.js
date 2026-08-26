@@ -66,7 +66,8 @@ function organizeDriveInbox_() {
     }, {
       clientMeetingsRootId: config.clientMeetingsRootId,
       rulesList: rulesList,
-      timezone: timezone
+      timezone: timezone,
+      meetingStart: parsed.startStamp
     });
     if ((filed.status === 'copied' || filed.status === 'deduped') && parsed.uuid) {
       writeZoomUuid_(rowEntry.sheet, rowEntry.headerMap, rowEntry.sheetRow, parsed.uuid);
