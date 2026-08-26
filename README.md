@@ -175,4 +175,4 @@ Same sheet; includes rows even if `email_draft_saved` is set. (`type=non_trainin
 
 `zoom_meeting_id` is parsed from the Zoom URL in `location` (e.g. `https://us02web.zoom.us/j/87824741880` → `87824741880`).
 
-`zoom_uuid` is the Zoom meeting-instance UUID parsed from the inbox filename after a successful copy or dedupe. Calendar re-import preserves it.
+`zoom_uuid` is the Zoom meeting-instance UUID parsed from the inbox filename after a successful copy or dedupe (last successful file on the row). Each artifact UUID is also written to `video_uuid` / `pdf_uuid` / `audio_uuid` / `transcript_uuid` / `chat_uuid`. Calendar re-import preserves all of them. Destination filenames come from `rules` templates and do not include the UUID.
