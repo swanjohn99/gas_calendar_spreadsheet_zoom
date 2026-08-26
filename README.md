@@ -13,14 +13,12 @@ Bound spreadsheet script that:
 1. Create/open the target Google Spreadsheet.
 2. Open **Extensions > Apps Script** and paste or `clasp push` this project.
 3. Add a `rules` sheet (title pattern with optional `${client_name}` → `folderPath` + artifact filenames). See Drive inbox section.
-4. Set Script Properties (**Project Settings > Script Properties**):
-   - `ZOOM_ARCHIVE_SPREADSHEET_ID` — spreadsheet ID for the archive **workbook**
+4. Set `ZOOM_ARCHIVE_SPREADSHEET_ID` in `Config.js` (archive **workbook** ID from the spreadsheet URL). Empty skips archive. Tab name is `zoom_archive`.
+5. Set Script Properties (**Project Settings > Script Properties**):
    - `API_KEY` — secret for `doGet`
    - `DRIVE_INBOX_FOLDER_ID` — Drive folder where Python drops recording artifacts
    - `CLIENT_MEETINGS_ROOT_FOLDER_ID` — root folder for `rules` `folderPath` segments
    - optional `CALENDAR_ID` — defaults to `primary`
-
-   Archive uses `ZOOM_ARCHIVE_SPREADSHEET_ID` (which file) plus tab name `zoom_archive` from `Config.js` (which sheet inside that file).
 5. Reload the spreadsheet. Use menu **Calendar Tools**.
 6. Re-authorize the script after `clasp push` if Drive scope changed.
 
