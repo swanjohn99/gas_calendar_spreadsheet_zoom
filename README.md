@@ -61,11 +61,10 @@ Re-run **Import Calendar** after header changes to repopulate columns.
 
 ## Workflow
 
-1. Chrome extension calls **GET** API for pending meetings
-2. Python fetches Zoom recordings and uploads artifacts to the Drive **inbox** as `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.{ext}` (`meeting_start_date` from the API, then Zoom UUID)
-3. **Organize Drive Inbox** (scheduled or menu) matches inbox files by meeting ID + `start` datetime, applies `rules`, copies/renames, fills Drive URL columns, per-artifact UUID columns, and `zoom_uuid`
-4. Email drafts are created on schedule, via the combined menu, or **Create Email Drafts** for selected rows when `email (yes or no)=yesEmail` and required URLs are present
-5. Each scheduled sync saves a run report (organize + drafts + new/deleted events). The **last** scheduled job emails the combined summary. Organize/drafts lead the email (may be empty). **Event import history is always included**, even when no files were organized and no drafts were created.
+1. Python fetches Zoom recordings and uploads artifacts to the Drive **inbox** as `{zoom_meeting_id}-{yyyy-MM-dd HH:mm:ss}_{uuid}.{ext}`
+2. **Organize Drive Inbox** (scheduled or menu) matches inbox files by meeting ID + `start` datetime, applies `rules`, copies/renames, fills Drive URL columns, per-artifact UUID columns, and `zoom_uuid`
+3. Email drafts are created on schedule, via the combined menu, or **Create Email Drafts** for selected rows when `email (yes or no)=yesEmail` and required URLs are present
+4. Each scheduled sync saves a run report (organize + drafts + new/deleted events). The **last** scheduled job emails the combined summary. Organize/drafts lead the email (may be empty). **Event import history is always included**, even when no files were organized and no drafts were created.
 
 Re-run **Calendar Tools → Schedule** after deploy to refresh sync triggers.
 
