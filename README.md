@@ -79,7 +79,7 @@ Full calendar title is stored in `title`. Rules match that title:
 
 ## Drive inbox + rules
 
-Inbox files are matched to a sheet row by **Zoom meeting ID + `start` date and time** (`yyyy-MM-dd HH:mm:ss`, same format as the `events` `start` column). Same meeting ID on the same day at different times maps to different rows.
+Inbox files are matched to a sheet row by **Zoom meeting ID** and **chronological order**. Inbox filename timestamps are used only to sort recording instances; they may differ from the row `start` when a meeting starts early or late. Within each meeting ID, inbox instances (grouped by `zoom_uuid`) are sorted by filename time and paired 1:1 with `events` rows sorted by `start`.
 
 Python drops all artifacts in the Drive inbox. GAS copies them into `rules` folders and writes Drive URLs.
 

@@ -13,7 +13,7 @@ The numeric Zoom meeting number shared by every occurrence of a recurring meetin
 _Avoid_: Meeting ID, event_id
 
 **Start**:
-The meeting datetime on an `events` row (`yyyy-MM-dd HH:mm:ss` in the script timezone from `appsscript.json`). Date and time together identify which occurrence an inbox file belongs to. Rules `folderPath` and artifact filename placeholders named `current_*` (`${current_year}`, `${current_quarter}`, `${currentDate}`, `${current_day}`, `${current_date}`) also resolve from this value, not the run date.
+The meeting datetime on an `events` row (`yyyy-MM-dd HH:mm:ss` in the script timezone from `appsscript.json`). With inbox matching, chronological position within a Zoom meeting ID pairs inbox instances to rows; row `start` is not required to equal the inbox filename time. Rules `folderPath` and artifact filename placeholders named `current_*` (`${current_year}`, `${current_quarter}`, `${currentDate}`, `${current_day}`, `${current_date}`) resolve from this value, not the run date or inbox filename time.
 _Avoid_: Date stamp, meeting date
 
 **Zoom UUID**:
