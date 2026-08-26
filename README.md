@@ -3,7 +3,7 @@
 Bound spreadsheet script that:
 
 - imports Google Calendar Zoom events into a single `events` sheet (no color split)
-- archives events older than 30 days to a `zoom_archive` tab in another spreadsheet (see Script Properties)
+- archives events older than 30 days to a `zoom_archive` tab in another spreadsheet (`CONFIG.ZOOM_ARCHIVE_SPREADSHEET_ID` in `Config.js`)
 - creates Gmail drafts for follow-up emails from selected `events` rows (`rules.email=yesEmail`)
 - exposes a `doGet` web app API for pending meetings (Chrome extension)
 - organizes Drive inbox files (from Python) into meeting folders and writes Drive artifact URLs
