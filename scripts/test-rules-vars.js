@@ -32,7 +32,7 @@ function formatDateStub(date, tz, format) {
     return String(parseInt(month, 10));
   }
   if (format === 'MM.dd.yy') {
-    return month + '.' + day + '.' + year.slice(-2);
+    return month.padStart(2, '0') + '.' + day.padStart(2, '0') + '.' + year.slice(-2);
   }
   throw new Error('unsupported format in test stub: ' + format);
 }
