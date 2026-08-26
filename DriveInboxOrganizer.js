@@ -33,13 +33,15 @@ function organizeDriveInbox_() {
 
   var timezone = getConfig_().timezone;
   var rulesList = buildRulesList_();
-  var rowIndex = buildMeetingRowIndex_(timezone);
+  var rowsByMeetingId = buildMeetingRowsByMeetingId_();
   var inbox = DriveApp.getFolderById(config.inboxFolderId);
-  var files = inbox.getFiles();
+  var inboxFiles = collectInboxFiles_(inbox);
+  var instancesByMeetingId = buildInboxInstancesByMeetingId_(inboxFiles);
+  var rowLookup = buildChronologicalRowLookup_(rowsByMeetingId, instancesByMeetingId);
   var result = emptyArtifactResult_(true, '');
 
-  while (files.hasNext()) {
-    var file = files.next();
+  for (var f = 0; f < inboxFiles.length; f++) {
+    var file = inboxFiles[f];
     var fileName = file.getName();
 
     if (isSegmentPartFile_(fileName)) {
@@ -54,9 +56,9 @@ function organizeDriveInbox_() {
       continue;
     }
 
-    var rowEntry = rowIndex[meetingRowIndexKey_(parsed.meetingId, parsed.startStamp)];
+    var rowEntry = rowLookup[inboxInstanceLookupKey_(parsed.meetingId, parsed.uuid)];
     if (!rowEntry) {
-      Logger.log('No sheet row for ' + parsed.meetingId + ' at ' + parsed.startStamp + ': ' + fileName);
+      Logger.log('No chronological sheet row for ' + parsed.meetingId + ' uuid ' + parsed.uuid + ': ' + fileName);
       result.skipped++;
       continue;
     }
@@ -69,7 +71,7 @@ function organizeDriveInbox_() {
       clientMeetingsRootId: config.clientMeetingsRootId,
       rulesList: rulesList,
       timezone: timezone,
-      meetingStart: parsed.startStamp
+      meetingStart: formatMeetingStartStamp_(rowEntry.data.start)
     });
     if ((filed.status === 'copied' || filed.status === 'deduped') && parsed.uuid) {
       writeZoomUuid_(rowEntry.sheet, rowEntry.headerMap, rowEntry.sheetRow, parsed.uuid);
