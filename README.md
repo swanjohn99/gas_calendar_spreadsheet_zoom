@@ -122,6 +122,11 @@ Re-running **Organize Drive Inbox** is idempotent: if the artifact URL is alread
 | `audio_url` | audio |
 | `transcript_url` | transcript |
 | `chat_url` | chat |
+| `video_uuid` | video |
+| `pdf_uuid` | meeting summary PDF |
+| `audio_uuid` | audio |
+| `transcript_uuid` | transcript |
+| `chat_uuid` | chat |
 
 **Create Email Drafts** requires `email (yes or no)=yesEmail`, `video_url`, `pdf_url`, `audio_url`, and `transcript_url` (`chat_url` optional). Greeting uses `rules.firstName`, else the first word of `client_name` from the title (`there` if neither). Email body links to `video_url`; attaches PDF, audio, transcript, and chat (if present).
 
