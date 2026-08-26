@@ -28,6 +28,6 @@ logic functions CAN be exercised in Node with `vm` + stubbed globals (e.g.
 
 ### Runtime config (Script Properties, set in Apps Script UI — not local)
 
-`API_KEY`, `CALENDAR_ID`, `DRIVE_INBOX_FOLDER_ID`, `CLIENT_MEETINGS_ROOT_FOLDER_ID`
+`CALENDAR_ID`, `DRIVE_INBOX_FOLDER_ID`, `CLIENT_MEETINGS_ROOT_FOLDER_ID`
 (see `README.md` / `Config.js`). Archive workbook ID is `CONFIG.ZOOM_ARCHIVE_SPREADSHEET_ID`
 in `Config.js`, not a Script Property.
