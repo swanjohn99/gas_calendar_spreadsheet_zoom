@@ -51,7 +51,12 @@ var CONFIG = {
     'audio_url',
     'transcript_url',
     'chat_url',
-    'zoom_uuid'
+    'zoom_uuid',
+    'video_uuid',
+    'pdf_uuid',
+    'audio_uuid',
+    'transcript_uuid',
+    'chat_uuid'
   ]
 };
 

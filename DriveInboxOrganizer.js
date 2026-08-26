@@ -1,7 +1,7 @@
 /**
  * Drive inbox organizer — match inbox files by meeting ID + start datetime,
  * look up rules by title, rename from templates, copy into folderPath,
- * write artifact URLs and zoom_uuid.
+ * write artifact URLs, per-artifact UUIDs, and zoom_uuid.
  *
  * Inbox filename: `{zoomMeetingId}-{yyyy-MM-dd HH:mm:ss}_{uuid}.{ext}`
  * Optional chat: `{zoomMeetingId}-{yyyy-MM-dd HH:mm:ss}_{uuid}-chat.txt`
