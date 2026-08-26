@@ -103,7 +103,13 @@ function fileArtifactForMeetingRow_(rowEntry, artifact, content, context) {
   }
   var rule = match.rule;
 
-  var vars = buildRulesReplacementVars_(rowData, rule, rowData.start, context.timezone, match.clientName);
+  var vars = buildRulesReplacementVars_(
+    rowData,
+    rule,
+    context.meetingStart || rowData.start,
+    context.timezone,
+    match.clientName
+  );
   if (!vars) {
     Logger.log('Missing meeting start for row: ' + rowData.title);
     return { status: 'skipped', reason: 'missing_start' };
