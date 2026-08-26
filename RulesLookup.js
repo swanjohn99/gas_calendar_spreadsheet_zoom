@@ -1,7 +1,10 @@
 /**
  * rules sheet lookup — title pattern → folder/filename templates.
  * Variable titles use ${client_name}; match longest normalized prefix first.
- * Date/time placeholders use the meeting start date (not "now").
+ *
+ * Date placeholders (legacy "current_*" names) use the meeting start column, not run date:
+ * ${current_year} yyyy | ${current_quarter} q1-q4 | ${currentDate} MM.dd.yy
+ * ${current_day} MM.dd.yy | ${current_date} MM.dd.yy (alias)
  */
 
 var RULES_LOOKUP = {
