@@ -97,7 +97,7 @@ Flow:
 
 1. Parse inbox name → meeting ID + start datetime + UUID → find row on `events`
 2. Look up `rules` by row `title` (prefix or exact; see Title parsing)
-3. Expand `folderPath` + artifact filename templates with `${firstName}`, `${client_name}`, and meeting-start placeholders (`${current_year}`, `${current_quarter}`, `${currentDate}`, `${current_day}`)
+3. Expand `folderPath` + artifact filename templates with `${firstName}`, `${client_name}`, and meeting-start placeholders (`${current_year}`, `${current_quarter}`, `${currentDate}`, `${current_day}`, `${current_date}`). Despite the legacy `current_*` names, these all use the row `start` datetime, not the run date.
 4. Copy into `{CLIENT_MEETINGS_ROOT}/{folderPath segments}/` under the template filename (no UUID in the destination name); write URL columns, per-artifact UUID columns, and `zoom_uuid`
 
 On calendar import, `email (yes or no)` on the event row is copied from the matching `rules.email` value (`yesEmail` / `noEmail`).
