@@ -278,9 +278,9 @@ function parseInboxMeetingFilename_(fileName) {
 
   var meetingId = match[1];
   var startStamp = match[2] + ' ' + String(match[3] || '').replace(/-/g, ':');
-  var uuid = String(match[3] || '').trim();
-  var suffix = String(match[4] || '').toLowerCase();
-  var ext = String(match[5] || '').toLowerCase();
+  var uuid = String(match[4] || '').trim();
+  var suffix = String(match[5] || '').toLowerCase();
+  var ext = String(match[6] || '').toLowerCase();
   if (!uuid) {
     return null;
   }
