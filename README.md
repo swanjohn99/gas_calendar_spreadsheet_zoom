@@ -102,7 +102,7 @@ Example: `87824741880-2026-07-30 14:30:00_aDYqeqPTTdS7uaX92HflhQ==.mp4`
 
 Flow:
 
-1. Parse inbox name → meeting ID + start datetime + UUID → find row on `events` (Zoom sync matches by meeting ID + `start` time instead)
+1. Parse inbox name → meeting ID + start datetime + UUID → find row on `events`
 2. Look up `rules` by row `title` (prefix or exact; see Title parsing)
 3. Expand `folderPath` + artifact filename templates with `${firstName}`, `${client_name}`, and meeting-start placeholders (`${current_year}`, `${current_quarter}`, `${currentDate}`, `${current_day}`)
 4. Copy into `{CLIENT_MEETINGS_ROOT}/{folderPath segments}/` under the template filename; write URL columns and `zoom_uuid`
