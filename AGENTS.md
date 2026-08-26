@@ -29,5 +29,4 @@ logic functions CAN be exercised in Node with `vm` + stubbed globals (e.g.
 ### Runtime config (Script Properties, set in Apps Script UI — not local)
 
 `API_KEY`, `CALENDAR_ID`, `ZOOM_ARCHIVE_SPREADSHEET_ID`, `DRIVE_INBOX_FOLDER_ID`,
-`CLIENT_MEETINGS_ROOT_FOLDER_ID`, `ZOOM_ACCOUNT_ID`, `ZOOM_CLIENT_ID`, `ZOOM_CLIENT_SECRET`,
-`ZOOM_USER_ID` (see `README.md` / `Config.js`).
+`CLIENT_MEETINGS_ROOT_FOLDER_ID` (see `README.md` / `Config.js`).
