@@ -80,7 +80,7 @@ function organizeDriveInbox_() {
 }
 
 /**
- * File one artifact for a meeting row (shared by inbox organizer and Zoom sync).
+ * File one artifact for a meeting row from a Drive inbox file.
  */
 function fileArtifactForMeetingRow_(rowEntry, artifact, content, context) {
   var rowData = rowEntry.data;
