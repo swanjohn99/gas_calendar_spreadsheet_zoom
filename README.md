@@ -53,8 +53,7 @@ If the workflow fails with `401`, re-run `clasp login` locally and update `CLASP
 
 - **Import Calendar** — sync Zoom events into `events`, then archive old rows
 - **Schedule** — installs sync triggers at `9:00, 12:00, 15:00, 17:00` `America/Chicago`. Each run saves a report; the **last** run (no later hours left today) emails the combined summary (new + deleted events only — not row updates)
-- **Sync Zoom Recordings** — fetch audio, transcript, chat, and summary from Zoom API; file via `rules`, write URL columns
-- **Organize Drive Inbox** — match inbox files by meeting ID + `start` datetime, apply `rules`, copy/rename, write URL columns and `zoom_uuid` (MP4 from Python)
+- **Organize Drive Inbox** — match inbox files by meeting ID + `start` datetime, apply `rules`, copy/rename, write Drive URL columns and `zoom_uuid`
 - **Create Email Drafts** — drafts for selected `events` rows with `email (yes or no)=yesEmail`; greeting uses `rules.firstName`, else first word of `${client_name}` from the title
 - **Organize Inbox + Email Drafts** — runs organizer then pending drafts in one step (no day-summary email)
 
