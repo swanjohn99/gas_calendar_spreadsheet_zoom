@@ -1,12 +1,5 @@
 var CONFIG = {
   EVENTS_SHEET_NAME: 'events',
-  LEGACY_EVENTS_SHEET_NAMES: [
-    'Coaching events',
-    'Non-Coaching events',
-    'Events',
-    'TrainingEvents',
-    'Non-Training Events'
-  ],
   CALENDAR_ID: 'primary',
   LOOKBACK_DAYS: 7,
   LOOKAHEAD_DAYS: 30,
