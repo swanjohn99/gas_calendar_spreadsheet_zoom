@@ -71,7 +71,7 @@ function getConfig_() {
     zoomArchiveSpreadsheetId: CONFIG.ZOOM_ARCHIVE_SPREADSHEET_ID,
     zoomArchiveSheetName: CONFIG.ZOOM_ARCHIVE_SHEET_NAME,
     syncHours: CONFIG.SYNC_HOURS.slice(),
-    timezone: CONFIG.TIMEZONE,
+    timezone: Session.getScriptTimeZone(),
     dateFormat: CONFIG.DATE_FORMAT,
     zoomLocationPattern: CONFIG.ZOOM_LOCATION_PATTERN,
     emailSubjectPrefix: CONFIG.EMAIL_SUBJECT_PREFIX,
