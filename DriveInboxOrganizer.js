@@ -47,7 +47,7 @@ function organizeDriveInbox_() {
 
     var parsed = parseInboxMeetingFilename_(fileName);
     if (!parsed) {
-      Logger.log('Inbox filename not MeetingID-datetime-uuid: ' + fileName);
+      Logger.log('Inbox filename not MeetingID_datetime_uuid: ' + fileName);
       result.skipped++;
       continue;
     }

@@ -21,5 +21,5 @@ The Zoom meeting-instance identifier carried in the inbox filename after start. 
 _Avoid_: UUID, event_id, zoom_meeting_id
 
 **Inbox file**:
-A recording dropped in the Drive inbox, named `{zoom_meeting_id}-{start}_{zoom_uuid}.{ext}`.
+A recording dropped in the Drive inbox, named `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{zoom_uuid}.{ext}` (chat: `..._{zoom_uuid}_chat.txt`).
 _Avoid_: Upload, Drive file
