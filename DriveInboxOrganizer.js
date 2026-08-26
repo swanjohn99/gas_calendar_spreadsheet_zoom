@@ -244,6 +244,17 @@ function getArtifactUrlColumn_(artifact) {
   return columnMap[artifact] || '';
 }
 
+function getArtifactUuidColumn_(artifact) {
+  var columnMap = {
+    video: 'video_uuid',
+    audio: 'audio_uuid',
+    transcript: 'transcript_uuid',
+    meeting_summary: 'pdf_uuid',
+    chat: 'chat_uuid',
+  };
+  return columnMap[artifact] || '';
+}
+
 function findFileInFolderByName_(folder, fileName) {
   var it = folder.getFilesByName(fileName);
   return it.hasNext() ? it.next() : null;
