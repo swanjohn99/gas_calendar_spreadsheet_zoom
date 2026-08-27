@@ -10,6 +10,7 @@ function getEventsSheet_() {
 }
 
 function ensureHeaders_(sheet, headers) {
+  deleteNamedColumnIfPresent_(sheet, 'zoom_uuid');
   var lastCol = sheet.getLastColumn();
   if (lastCol === 0) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
