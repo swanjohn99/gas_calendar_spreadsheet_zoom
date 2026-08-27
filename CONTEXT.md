@@ -17,7 +17,7 @@ The meeting datetime on an `events` row (`yyyy-MM-dd HH:mm:ss` in the script tim
 _Avoid_: Date stamp, meeting date
 
 **Zoom UUID**:
-The Zoom meeting-instance identifier carried in the inbox filename after start. Written to `zoom_uuid` and to the matching artifact column (`video_uuid`, `pdf_uuid`, `audio_uuid`, `transcript_uuid`, `chat_uuid`). Not part of the destination filename.
+The Zoom meeting-instance identifier in the inbox filename between start and filetype. Written to `zoom_uuid` and to the matching artifact column (`video_uuid`, `pdf_uuid`, `audio_uuid`, `transcript_uuid`, `chat_uuid`). Not part of the destination filename.
 _Avoid_: UUID, event_id, zoom_meeting_id
 
 **Inbox file**:
