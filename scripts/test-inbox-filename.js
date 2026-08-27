@@ -105,5 +105,9 @@ assert(
   sandbox.parseInboxMeetingFilename_(meetingId + '_2026-08-26_13-15-00_' + uuid + '.m4a') === null,
   'reject missing filetype'
 );
+assert(
+  sandbox.parseInboxMeetingFilename_(meetingId + '_2026-08-26_13-15-00_' + uuid + '_summary.txt') === null,
+  'reject summary without pdf'
+);
 
 console.log('test-inbox-filename: ok');
