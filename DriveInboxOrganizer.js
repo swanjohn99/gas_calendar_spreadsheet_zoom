@@ -349,6 +349,15 @@ function meetingRowIndexKey_(meetingId, startStamp) {
 }
 
 function formatMeetingStartStamp_(value) {
+  if (value === null || value === undefined || value === '') {
+    return '';
+  }
+  if (typeof value === 'string') {
+    var stamp = value.trim();
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(stamp)) {
+      return stamp;
+    }
+  }
   return formatDateValue_(value) || '';
 }
 

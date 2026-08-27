@@ -110,4 +110,18 @@ assert(
   'reject summary without pdf'
 );
 
+assert(
+  sandbox.formatMeetingStartStamp_(startStamp) === startStamp,
+  'pass through formatted start string'
+);
+assert(
+  sandbox.formatMeetingStartStamp_('  ' + startStamp + '  ') === startStamp,
+  'trim formatted start string'
+);
+assert(
+  sandbox.meetingRowIndexKey_(meetingId, sandbox.formatMeetingStartStamp_(startStamp)) ===
+    sandbox.meetingRowIndexKey_(meetingId, startStamp),
+  'string start indexes to filename stamp'
+);
+
 console.log('test-inbox-filename: ok');
