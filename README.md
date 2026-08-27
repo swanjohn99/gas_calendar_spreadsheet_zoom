@@ -79,7 +79,7 @@ Full calendar title is stored in `title`. Rules match that title:
 
 ## Drive inbox + rules
 
-Inbox files are matched to a sheet row by **Zoom meeting ID** and **start datetime** (filename `{yyyy-MM-dd}_{HH-mm-ss}` vs row `start`). Every artifact uses the same name shape; `{uuid}` is stored on the row (`zoom_uuid` and the artifact UUID column).
+Inbox files are matched to a sheet row by **Zoom meeting ID** and **start datetime** (filename `{yyyy-MM-dd}_{HH-mm-ss}` vs row `start`). Every artifact uses the same name shape; `{uuid}` is stored on the matching artifact UUID column.
 
 Python drops all artifacts in the Drive inbox. GAS copies them into `rules` folders and writes Drive URLs.
 
