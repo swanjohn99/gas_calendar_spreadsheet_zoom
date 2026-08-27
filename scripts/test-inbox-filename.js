@@ -74,6 +74,7 @@ var cases = [
   { name: meetingId + '_2026-08-26_13-15-00_' + uuid + '_audio.m4a', artifact: 'audio' },
   { name: meetingId + '_2026-08-26_13-15-00_' + uuid + '_video.mp4', artifact: 'video' },
   { name: meetingId + '_2026-08-26_13-15-00_' + uuid + '_pdf.pdf', artifact: 'meeting_summary' },
+  { name: meetingId + '_2026-08-26_13-15-00_' + uuid + '_summary.pdf', artifact: 'meeting_summary' },
   { name: meetingId + '_2026-08-26_13-15-00_' + uuid + '_transcript.txt', artifact: 'transcript' },
   { name: meetingId + '_2026-08-26_13-15-00_' + uuid + '_chat.txt', artifact: 'chat' }
 ];
