@@ -79,23 +79,23 @@ Full calendar title is stored in `title`. Rules match that title:
 
 ## Drive inbox + rules
 
-Inbox files are matched to a sheet row by **Zoom meeting ID** and **chronological order**. Inbox filename timestamps are used only to sort recording instances; they may differ from the row `start` when a meeting starts early or late. Within each meeting ID, inbox instances (grouped by `zoom_uuid`) are sorted by filename time and paired 1:1 with `events` rows sorted by `start`.
+Inbox files are matched to a sheet row by **Zoom meeting ID** and **start datetime** (filename `{yyyy-MM-dd}_{HH-mm-ss}` vs row `start`). Every artifact uses the same name shape; `{uuid}` is stored on the row (`zoom_uuid` and the artifact UUID column).
 
 Python drops all artifacts in the Drive inbox. GAS copies them into `rules` folders and writes Drive URLs.
 
 | Artifact | Source | Filename pattern |
 |----------|--------|------------------|
-| video | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}.mp4` |
-| audio | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}.m4a` |
-| pdf | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}.pdf` |
-| transcript | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}.txt` |
+| video | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_video.mp4` |
+| audio | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_audio.m4a` |
+| pdf | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_pdf.pdf` |
+| transcript | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_transcript.txt` |
 | chat | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_chat.txt` |
 
-Example: `87824741880-2026-07-30 14:30:00_aDYqeqPTTdS7uaX92HflhQ==.mp4`
+Example: `87824741882_2026-08-26_13-15-00_uuid2_audio.m4a`
 
 Flow:
 
-1. Parse inbox name → meeting ID + inbox sort time + UUID → find row on `events` by meeting ID and chronological position (not exact time match)
+1. Parse inbox name → meeting ID + start datetime + UUID + filetype → find row on `events` by meeting ID and `start` (exact match)
 2. Look up `rules` by row `title` (prefix or exact; see Title parsing)
 3. Expand `folderPath` + artifact filename templates with `${firstName}`, `${client_name}`, and meeting-start placeholders (`${current_year}`, `${current_quarter}`, `${currentDate}`, `${current_day}`, `${current_date}`). Despite the legacy `current_*` names, these all use the row `start` datetime, not the run date.
 4. Copy into `{CLIENT_MEETINGS_ROOT}/{folderPath segments}/` under the template filename (no UUID in the destination name); write URL columns, per-artifact UUID columns, and `zoom_uuid`
