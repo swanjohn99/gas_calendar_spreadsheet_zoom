@@ -127,7 +127,7 @@ Re-running **Organize Drive Inbox** is idempotent: if the artifact URL is alread
 
 ## Sheet columns
 
-**events:** `event_id`, `title`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `updated`, `email (yes or no)`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`, `zoom_uuid`, `video_uuid`, `pdf_uuid`, `audio_uuid`, `transcript_uuid`, `chat_uuid`
+**events:** `event_id`, `title`, `location`, `zoom_meeting_id`, `start`, `end`, `attendee_email`, `updated`, `email (yes or no)`, `email_draft_saved`, `video_url`, `pdf_url`, `audio_url`, `transcript_url`, `chat_url`, `video_uuid`, `pdf_uuid`, `audio_uuid`, `transcript_uuid`, `chat_uuid`
 
 `email (yes or no)` is copied from `rules` on import (`yesEmail` / `noEmail`). Drafts only run when the value is `yesEmail`; body greeting uses `rules.firstName` or the first word of `client_name`.
 
