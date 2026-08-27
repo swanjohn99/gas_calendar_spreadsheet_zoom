@@ -69,8 +69,6 @@ function organizeDriveInbox_() {
       meetingStart: formatMeetingStartStamp_(rowEntry.data.start)
     });
     if ((filed.status === 'copied' || filed.status === 'deduped') && parsed.uuid) {
-      writeZoomUuid_(rowEntry.sheet, rowEntry.headerMap, rowEntry.sheetRow, parsed.uuid);
-      rowEntry.data.zoom_uuid = parsed.uuid;
       writeArtifactUuid_(
         rowEntry.sheet,
         rowEntry.headerMap,
