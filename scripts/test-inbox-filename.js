@@ -124,4 +124,25 @@ assert(
   'string start indexes to filename stamp'
 );
 
+var nyDate = new Date('2026-08-26T17:15:00.000Z');
+assert(
+  sandbox.formatMeetingStartStamp_(nyDate) === startStamp,
+  'Date formats in fallback script TZ'
+);
+
+sandbox.SpreadsheetApp = {
+  getActiveSpreadsheet: function () {
+    return {
+      getSpreadsheetTimeZone: function () {
+        return 'UTC';
+      }
+    };
+  }
+};
+assert(
+  sandbox.formatMeetingStartStamp_(nyDate) === '2026-08-26 17:15:00',
+  'Date formats in spreadsheet TZ'
+);
+sandbox.SpreadsheetApp = undefined;
+
 console.log('test-inbox-filename: ok');

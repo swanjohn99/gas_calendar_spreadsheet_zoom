@@ -326,11 +326,22 @@ function buildMeetingRowIndex_() {
   var index = {};
   var sheet = getEventsSheet_();
   var sheetData = getSheetDataObjects_(sheet, null);
+  var startCol = sheetData.headerMap.start;
+  var displayStarts = null;
+  if (startCol !== undefined && sheetData.rows.length) {
+    displayStarts = sheet.getRange(2, startCol + 1, sheetData.rows.length, 1).getDisplayValues();
+  }
   for (var i = 0; i < sheetData.rows.length; i++) {
     var row = sheetData.rows[i];
     var meetingId = String(row.data.zoom_meeting_id || '').replace(/\D/g, '');
     if (!meetingId) continue;
-    var startStamp = formatMeetingStartStamp_(row.data.start);
+    var startStamp = '';
+    if (displayStarts && displayStarts[i]) {
+      startStamp = formatMeetingStartStamp_(displayStarts[i][0]);
+    }
+    if (!startStamp) {
+      startStamp = formatMeetingStartStamp_(row.data.start);
+    }
     if (!startStamp) continue;
     index[meetingRowIndexKey_(meetingId, startStamp)] = {
       sheet: sheet,
@@ -346,6 +357,20 @@ function meetingRowIndexKey_(meetingId, startStamp) {
   return String(meetingId || '') + '|' + String(startStamp || '');
 }
 
+function getSpreadsheetTimeZone_() {
+  try {
+    if (typeof SpreadsheetApp === 'undefined' || !SpreadsheetApp) {
+      return getConfig_().timezone;
+    }
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var tz = ss && ss.getSpreadsheetTimeZone();
+    if (tz) {
+      return tz;
+    }
+  } catch (e) {}
+  return getConfig_().timezone;
+}
+
 function formatMeetingStartStamp_(value) {
   if (value === null || value === undefined || value === '') {
     return '';
@@ -356,7 +381,16 @@ function formatMeetingStartStamp_(value) {
       return stamp;
     }
   }
-  return formatDateValue_(value) || '';
+  var date = value;
+  if (Object.prototype.toString.call(value) !== '[object Date]') {
+    date = parseSheetDate_(value);
+  } else if (isNaN(value.getTime())) {
+    return '';
+  }
+  if (!date || isNaN(date.getTime())) {
+    return '';
+  }
+  return Utilities.formatDate(date, getSpreadsheetTimeZone_(), getConfig_().dateFormat) || '';
 }
 
 function sanitizeDriveName_(value) {
