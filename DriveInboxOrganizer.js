@@ -46,14 +46,14 @@ function organizeDriveInbox_() {
 
     var parsed = parseInboxMeetingFilename_(fileName);
     if (!parsed) {
-      Logger.log('Inbox filename not MeetingID_datetime_uuid: ' + fileName);
+      Logger.log('Inbox filename not MeetingID_date_time_uuid_filetype: ' + fileName);
       result.skipped++;
       continue;
     }
 
-    var rowEntry = rowLookup[inboxInstanceLookupKey_(parsed.meetingId, parsed.uuid)];
+    var rowEntry = meetingRowIndex[meetingRowIndexKey_(parsed.meetingId, parsed.startStamp)];
     if (!rowEntry) {
-      Logger.log('No chronological sheet row for ' + parsed.meetingId + ' uuid ' + parsed.uuid + ': ' + fileName);
+      Logger.log('No sheet row for ' + parsed.meetingId + ' at ' + parsed.startStamp + ': ' + fileName);
       result.skipped++;
       continue;
     }
