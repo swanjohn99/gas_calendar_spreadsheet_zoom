@@ -271,12 +271,11 @@ function isSegmentPartFile_(fileName) {
 }
 
 /**
- * `{meetingId}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}.ext`
- * or `{meetingId}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_chat.txt`
+ * `{meetingId}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_{filetype}.{ext}`
  */
 function parseInboxMeetingFilename_(fileName) {
   var match = String(fileName || '').match(
-    /^(\d+)_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})_([^.]+?)(?:_(chat|transcript))?(\.[^.]+)$/i
+    /^(\d+)_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})_(.+)_(video|audio|pdf|chat|transcript|mp4|m4a)(\.[^.]+)$/i
   );
   if (!match) {
     return null;
@@ -285,12 +284,12 @@ function parseInboxMeetingFilename_(fileName) {
   var meetingId = match[1];
   var startStamp = match[2] + ' ' + String(match[3] || '').replace(/-/g, ':');
   var uuid = String(match[4] || '').trim();
-  var suffix = String(match[5] || '').toLowerCase();
+  var fileType = String(match[5] || '').toLowerCase();
   var ext = String(match[6] || '').toLowerCase();
   if (!uuid) {
     return null;
   }
-  var artifact = classifyArtifactByExtension_(ext, suffix);
+  var artifact = classifyArtifactByFileType_(fileType);
   if (!artifact) {
     return null;
   }
@@ -304,14 +303,12 @@ function parseInboxMeetingFilename_(fileName) {
   };
 }
 
-function classifyArtifactByExtension_(ext, suffix) {
-  if (ext === '.mp4') return 'video';
-  if (ext === '.m4a') return 'audio';
-  if (ext === '.pdf') return 'meeting_summary';
-  if (ext === '.txt') {
-    if (suffix === 'chat') return 'chat';
-    return 'transcript';
-  }
+function classifyArtifactByFileType_(fileType) {
+  if (fileType === 'video' || fileType === 'mp4') return 'video';
+  if (fileType === 'audio' || fileType === 'm4a') return 'audio';
+  if (fileType === 'pdf') return 'meeting_summary';
+  if (fileType === 'transcript') return 'transcript';
+  if (fileType === 'chat') return 'chat';
   return null;
 }
 
