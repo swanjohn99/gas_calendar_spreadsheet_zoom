@@ -309,7 +309,7 @@ function parseInboxMeetingFilename_(fileName) {
 function classifyArtifactByFileType_(fileType) {
   if (fileType === 'video' || fileType === 'mp4') return 'video';
   if (fileType === 'audio' || fileType === 'm4a') return 'audio';
-  if (fileType === 'pdf') return 'meeting_summary';
+  if (fileType === 'pdf' || fileType === 'summary') return 'meeting_summary';
   if (fileType === 'transcript') return 'transcript';
   if (fileType === 'chat') return 'chat';
   return null;
