@@ -1,7 +1,7 @@
 /**
  * Drive inbox organizer — match inbox files to sheet rows by Zoom meeting ID
  * and start datetime. Look up rules by title, rename from templates, copy into
- * folderPath, write artifact URLs, per-artifact UUIDs, and zoom_uuid.
+ * folderPath, write artifact URLs and per-artifact UUIDs.
  *
  * Inbox filename: `{zoomMeetingId}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_{filetype}.{ext}`
  */
