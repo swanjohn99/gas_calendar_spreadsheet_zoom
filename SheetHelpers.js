@@ -38,6 +38,20 @@ function ensureHeaders_(sheet, headers) {
   }
 }
 
+function deleteNamedColumnIfPresent_(sheet, headerName) {
+  var lastCol = sheet.getLastColumn();
+  if (lastCol === 0) {
+    return;
+  }
+  var existing = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  for (var i = 0; i < existing.length; i++) {
+    if (existing[i] === headerName) {
+      sheet.deleteColumn(i + 1);
+      return;
+    }
+  }
+}
+
 function getHeaderIndexMap_(sheet) {
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   var map = {};
