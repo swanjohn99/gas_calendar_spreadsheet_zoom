@@ -30,11 +30,9 @@ function organizeDriveInbox_() {
 
   var timezone = getConfig_().timezone;
   var rulesList = buildRulesList_();
-  var rowsByMeetingId = buildMeetingRowsByMeetingId_();
+  var meetingRowIndex = buildMeetingRowIndex_();
   var inbox = DriveApp.getFolderById(config.inboxFolderId);
   var inboxFiles = collectInboxFiles_(inbox);
-  var instancesByMeetingId = buildInboxInstancesByMeetingId_(inboxFiles);
-  var rowLookup = buildChronologicalRowLookup_(rowsByMeetingId, instancesByMeetingId);
   var result = emptyArtifactResult_(true, '');
 
   for (var f = 0; f < inboxFiles.length; f++) {
