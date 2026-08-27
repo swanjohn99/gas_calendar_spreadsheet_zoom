@@ -87,7 +87,7 @@ Python drops all artifacts in the Drive inbox. GAS copies them into `rules` fold
 |----------|--------|------------------|
 | video | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_video.mp4` |
 | audio | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_audio.m4a` |
-| pdf | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_pdf.pdf` |
+| pdf | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_pdf.pdf` or `_summary.pdf` |
 | transcript | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_transcript.txt` |
 | chat | Drive inbox (Python) | `{zoom_meeting_id}_{yyyy-MM-dd}_{HH-mm-ss}_{uuid}_chat.txt` |
 
