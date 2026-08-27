@@ -275,7 +275,7 @@ function isSegmentPartFile_(fileName) {
  */
 function parseInboxMeetingFilename_(fileName) {
   var match = String(fileName || '').match(
-    /^(\d+)_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})_(.+)_(video|audio|pdf|chat|transcript|mp4|m4a)(\.[^.]+)$/i
+    /^(\d+)_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})_(.+)_(video|audio|pdf|summary|chat|transcript|mp4|m4a)(\.[^.]+)$/i
   );
   if (!match) {
     return null;
@@ -287,6 +287,9 @@ function parseInboxMeetingFilename_(fileName) {
   var fileType = String(match[5] || '').toLowerCase();
   var ext = String(match[6] || '').toLowerCase();
   if (!uuid) {
+    return null;
+  }
+  if (fileType === 'summary' && ext !== '.pdf') {
     return null;
   }
   var artifact = classifyArtifactByFileType_(fileType);
